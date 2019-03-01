@@ -59,14 +59,13 @@
                     });
                     info_float.width(container.width());
                 }
-
                 $('#status').select2({multiple: 1, placeholder: '{{ _('Filter by status...') }}'})
                     .css({'visibility': 'visible'});
                 $('#language').select2({multiple: 1, placeholder: '{{ _('Filter by language...') }}'})
                     .css({'visibility': 'visible'});
             });
-
             // Draw the statistics graph.
+            var chart;
             function stats_graph(raw_data) {
                 var colors = {
                     TLE: '#a3bcbd',
@@ -77,10 +76,11 @@
                 };
                 var canvas = $('#status-graph').find('canvas');
                 var ctx = canvas[0].getContext('2d');
-                ctx.canvas.width = canvas.width(); // resize to default width
-                ctx.canvas.height = canvas.height(); // resize to default height
                 var font = $('body').css('font-family');
-                new Chart(ctx).Pie(raw_data.categories.map(function (entry) {
+                if (typeof chart != "undefined") {
+                    chart.destroy();
+                }
+                chart = new Chart(ctx).Pie(raw_data.categories.map(function (entry) {
                     return {
                         color: colors[entry.code],
                         label: entry.name,
@@ -94,23 +94,19 @@
                 });
                 $('#total-submission-count').text(raw_data.total);
             }
-
             $(function () {
                 stats_graph({{ results_json }});
             });
-
             function load_dynamic_update(last_msg) {
                 var _collect = function (e) {
                     return e.value;
                 };
                 var language_filter = $.map($('select#language option[selected]'), _collect);
                 var status_filter = $.map($('select#status option[selected]'), _collect);
-
                 var table = $('#submissions-table');
                 var statistics = $("#statistics-table");
                 var doing_ajax = false;
                 var first = parseInt(table.find('tr:first-child').attr('id'));
-
                 var update_submission = function (message, force) {
                     if (language_filter.length && 'language' in message &&
                         language_filter.indexOf(message.language) == -1)
@@ -118,7 +114,6 @@
                     if (status_filter.length && 'status' in message &&
                         status_filter.indexOf(message.status) == -1)
                         return;
-
                     var id = message.id;
                     var row = table.find('tr#' + id);
                     if (row.length < 1) {
@@ -155,9 +150,7 @@
                         });
                     }
                 };
-
                 var stats_outdated = false;
-
                 function update_stats() {
                     $.ajax({
                         url: '?results'
@@ -169,12 +162,10 @@
                         stats_outdated = false;
                     });
                 }
-
                 $(window).on('dmoj:window-visible', function () {
                     if (stats_outdated)
                         update_stats();
                 });
-
                 var $body = $(document.body);
                 var receiver = new EventReceiver(
                     "{{ EVENT_DAEMON_LOCATION }}", "{{ EVENT_DAEMON_POLL_LOCATION }}",
@@ -190,7 +181,6 @@
                             update_submission(message);
                         } else if (message.type == 'done-submission') {
                             update_submission(message, true);
-
                             if (!statistics.length) return;
                             if ($('body').hasClass('window-hidden'))
                                 return stats_outdated = true;
@@ -234,11 +224,9 @@
             td.sub-prop, col.sub-prop {
                 width: 22%
             }
-
             col.sub-info, td.sub-info {
                 width: 78%
             }
-
             #status, #language {
                 visibility: hidden;
             }
@@ -250,11 +238,9 @@
             text-align: center;
             margin-bottom: 0.5em;
         }
-
         #status-graph {
             padding: 1em 0em;
         }
-
         #status-graph canvas {
             display: block;
             margin: 0 auto;
