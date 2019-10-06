@@ -3,7 +3,6 @@ import logging
 
 from django import forms
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -82,10 +81,11 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
                 'assignees': list(ticket.assignees.values_list('id', flat=True)),
             })
         if isinstance(ticket.linked_item, Problem):
-            logger.info("New ticket for {problem}: {url}".format({
-                'problem': ticket.linked_item.code,
-                'url': request.build_absolute_uri(reverse('ticket', args=[ticket.id]))
-            }))
+            logger.info('New ticket for %s: %s', 
+                ticket.linked_item.code,
+                self.request.build_absolute_uri(reverse('ticket', args=[ticket.id]))
+            )
+             
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
 
