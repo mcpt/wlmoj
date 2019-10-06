@@ -81,10 +81,11 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
                 'message': message.id, 'user': ticket.user_id,
                 'assignees': list(ticket.assignees.values_list('id', flat=True)),
             })
-        logger.info("New ticket for {problem}: {url}".format({
-            'problem': ticket.linked_item.code,
-            'url': request.build_absolute_uri(reverse('ticket', args=[ticket.id]))
-        }))
+        if isinstance(ticket.linked_item, Problem):
+            logger.info("New ticket for {problem}: {url}".format({
+                'problem': ticket.linked_item.code,
+                'url': request.build_absolute_uri(reverse('ticket', args=[ticket.id]))
+            }))
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
 
