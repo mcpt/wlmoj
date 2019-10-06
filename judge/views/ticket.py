@@ -83,7 +83,7 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
             })
         logger.info("New ticket for {problem}: {url}".format({
             'problem': ticket.linked_item.code,
-            'url': 'https://' + Site.objects.get_current().domain + '/' + reverse('ticket', args=[ticket.id])
+            'url': request.build_absolute_uri(reverse('ticket', args=[ticket.id]))
         }))
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
