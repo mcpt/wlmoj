@@ -31,7 +31,8 @@ ticket_widget = (forms.Textarea() if HeavyPreviewPageDownWidget is None else
                  HeavyPreviewPageDownWidget(preview=reverse_lazy('ticket_preview'),
                                             preview_timeout=1000, hide_preview_button=True))
 
-logger = logging.getLogger("judge.ticket")
+logger = logging.getLogger('judge.ticket')
+
 
 class TicketForm(forms.Form):
     title = forms.CharField(max_length=100, label=gettext_lazy('Ticket title'))
@@ -80,6 +81,10 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
                 'message': message.id, 'user': ticket.user_id,
                 'assignees': list(ticket.assignees.values_list('id', flat=True)),
             })
+        logger.info("New ticket for {problem}: {url}".format({
+            'problem': ticket.linked_item.code,
+            'url': 'https://' + Site.objects.get_current().domain + '/' + reverse('ticket', args=[ticket.id])
+        }))
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
 
@@ -163,10 +168,6 @@ class TicketStatusChangeView(LoginRequiredMixin, TicketMixin, SingleObjectMixin,
         ticket = self.get_object()
         if ticket.is_open != self.open:
             ticket.is_open = self.open
-            logger.warn("New ticket for {problem}: {url}".format({
-                'problem': ticket.linked_item.code,
-                'url': 'http://' + Site.objects.get_current().domain + '/ticket/' + ticket.id
-            }))
             ticket.save()
             if event.real:
                 event.post('tickets', {
