@@ -1,9 +1,9 @@
-WLMOJ: Modern Online Judge [![Build Status](https://github.com/DMOJ/online-judge/workflows/build/badge.svg)](https://github.com/DMOJ/online-judge/actions/) [![Slack](https://slack.dmoj.ca/badge.svg)](https://slack.dmoj.ca)
+WLMOJ: Modern Online Judge [![Build Status](https://github.com/DMOJ/online-judge/workflows/build/badge.svg)](https://github.com/mcpt/wlmoj/actions/)
 =====
 
 A modern [open-source](https://github.com/DMOJ/online-judge/blob/master/LICENSE) online judge and contest platform system. It has been used to host hundreds of competitions, including several national olympiads.
 
-See it live at [dmoj.ca](https://dmoj.ca/)!
+See it live at [mcpt.ca](https://mcpt.ca/)!
 
 ## Features
 
@@ -29,10 +29,6 @@ See it live at [dmoj.ca](https://dmoj.ca/)!
 * Fine-grained permission control for staff
 * OAuth login with Google, Facebook, and Github
 * Two-factor authentication support
-
-## Installation
-
-Check out the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/site/installation). Feel free to reach out to us on [Slack](https://slack.dmoj.ca) if you have any questions.
 
 ## Screenshots
 
@@ -89,17 +85,9 @@ Use the site in whatever language you're most comfortable in &mdash; currently f
 
 
 
-### Highly featured administration interface
-The DMOJ admin interface is highly versatile, and can be efficiently used for anything from managing users to authoring problem statements.
-
-
-![](https://dmoj.ml/data/_other/readme/problem-admin.png)
-
-![](https://dmoj.ml/data/_other/readme/admin-dashboard.png)
-
 ## Supported Languages
 
-Check out [**DMOJ/judge**](https://github.com/DMOJ/judge) for more judging backend details.
+Check out [**mcpt/WLMOJ**](https://github.com/mcpt/WLMOJ) for more judging backend details.
 
 Supported languages include:
 * C++ 11/14/17 (GCC and Clang)
