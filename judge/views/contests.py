@@ -159,7 +159,7 @@ class ContestList(DiggPaginatorMixin, TitleMixin, ContestListMixin, ListView):
                 pass
         if 'organization' in request.GET:
             try:
-                self.selected_organizations = list(map(int, request.GET.getlist('organization')))
+                self.selected_organizations = list(request.GET.getlist('organization'))
             except ValueError:
                 pass
 
