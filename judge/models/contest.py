@@ -82,9 +82,9 @@ class Contest(models.Model):
                                                  help_text=_('Allow registration until the specified time.'),
                                                  blank=True, null=True)
     partially_hide_scoreboard = models.BooleanField(verbose_name=_('Partially hide scoreboard'),
-    									  help_text=_('Whether the scoreboard should be shown remain hidden '
-    									  			  'until the member\'s contest time is finished'), 
-    									  default=False)
+                                                    help_text=_('Whether the scoreboard should be shown hidden '
+                                                    'until the member\'s contest window is over.'),
+                                                    default=False)
     hide_scoreboard = models.BooleanField(verbose_name=_('hide scoreboard'),
                                           help_text=_('Whether the scoreboard should remain hidden for the duration '
                                                       'of the contest.'),
@@ -193,7 +193,8 @@ class Contest(models.Model):
     def can_see_full_scoreboard(self, user):
         if self.is_editable_by(user):
             return True
-        if not self.is_accessible_by(user): #Not accessible by user
+        if not self.is_accessible_by(user):
+            # Not accessible by user
             return False
         if not self.show_scoreboard:
             return False
@@ -206,7 +207,7 @@ class Contest(models.Model):
             profile = user.profile
             if profile:
                 for participation in ContestParticipation.objects.filter(virtual=0, user=profile) \
-                                                                        .select_related('contest').prefetch_related('contest__organizers'):
+                        .select_related('contest').prefetch_related('contest__organizers'):
                     if participation.ended and participation.contest == self:
                         return True
         return False
@@ -253,7 +254,8 @@ class Contest(models.Model):
             return None
 
     @property
-    def time_before_end(self): #In terms on contest time itself
+    def time_before_end(self):
+        # In terms on contest time itself
         if self.end_time >= self._now:
             return self.end_time - self._now
         else:
@@ -276,12 +278,13 @@ class Contest(models.Model):
     update_user_count.alters_data = True
 
     @cached_property
-    def show_scoreboard(self): #Show scoreboard, contest wise
-        if not self.can_join: #Cannot join contest
+    def show_scoreboard(self):
+        # Show scoreboard, contest wise
+        if not self.can_join:  # Cannot join contest
             return False
-        if self.hide_scoreboard and not self.ended: #Scoreboard hidden and contest not ended
+        if self.hide_scoreboard and not self.ended:  # Scoreboard hidden and contest not ended
             return False
-        if self.hide_scoreboard and self.permanently_hide_scoreboard: #Scoreboard hidden and permatently hidden
+        if self.hide_scoreboard and self.permanently_hide_scoreboard:  # Scoreboard hidden and permatently hidden
             return False
         return True
 
