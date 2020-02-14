@@ -203,8 +203,7 @@ class Contest(models.Model):
 
     def is_finished_contest(self, user):
         if user.is_authenticated:
-            profile = user.profile
-            participation = self.users.filter(virtual=ContestParticipation.LIVE, user=profile).first()
+            participation = self.users.filter(virtual=ContestParticipation.LIVE, user=user.profile).first()
             if participation and participation.ended and participation.contest == self:
                 return True
         return False
