@@ -81,14 +81,14 @@ class Contest(models.Model):
     registration_end_time = models.DateTimeField(verbose_name=_('registration end time'),
                                                  help_text=_('Allow registration until the specified time.'),
                                                  blank=True, null=True)
-    partially_hide_scoreboard = models.BooleanField(verbose_name=_('Partially hide scoreboard'),
-                                                    help_text=_("Whether the scoreboard should be shown hidden "
-                                                                "until the member's contest window is over."),
-                                                    default=False)
     hide_scoreboard = models.BooleanField(verbose_name=_('hide scoreboard'),
                                           help_text=_('Whether the scoreboard should remain hidden for the duration '
                                                       'of the contest.'),
                                           default=False)
+    partially_hide_scoreboard = models.BooleanField(verbose_name=_('Partially hide scoreboard'),
+                                                    help_text=_("Whether the scoreboard should be shown hidden "
+                                                                "until the member's contest window is over."),
+                                                    default=False)
     permanently_hide_scoreboard = models.BooleanField(verbose_name=_('permanently hide scoreboard'), default=False,
                                                       help_text=('Whether the scoreboard should remain hidden '
                                                                  'permanently. Requires "hide scoreboard" to be '
@@ -204,7 +204,7 @@ class Contest(models.Model):
     def is_finished_contest(self, user):
         if user.is_authenticated:
             participation = self.users.filter(virtual=ContestParticipation.LIVE, user=user.profile).first()
-            if participation and participation.ended and participation.contest == self:
+            if participation and participation.ended:
                 return True
         return False
 
