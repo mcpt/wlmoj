@@ -235,6 +235,7 @@ class Contest(models.Model):
 
     @cached_property
     def _now(self):
+        # This ensures that all methods talk about the same now.
         return timezone.now()
 
     @cached_property
