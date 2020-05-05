@@ -216,7 +216,7 @@ class Contest(models.Model):
             return False
         if self.hide_scoreboard and not self.is_in_contest(user) and self.end_time > self._now:
             return False
-        if self.partially_hide_scoreboard and not self.is_finished_contest(user):
+        if self.partially_hide_scoreboard and not self.has_completed_contest(user):
             return False
         return True
 
@@ -229,11 +229,11 @@ class Contest(models.Model):
             return True
         if not self.show_scoreboard:
             return False
-        if self.partially_hide_scoreboard and not self.is_finished_contest(user):
+        if self.partially_hide_scoreboard and not self.has_completed_contest(user):
             return False
         return True
 
-    def is_finished_contest(self, user):
+    def has_completed_contest(self, user):
         if user.is_authenticated:
             participation = self.users.filter(virtual=ContestParticipation.LIVE, user=user.profile).first()
             if participation and participation.ended:
