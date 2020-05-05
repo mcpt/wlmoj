@@ -86,7 +86,7 @@ class Contest(models.Model):
                                                       'of the contest.'),
                                           default=False)
     partially_hide_scoreboard = models.BooleanField(verbose_name=_('Partially hide scoreboard'),
-                                                    help_text=_("Whether the scoreboard should be shown hidden "
+                                                    help_text=_("Whether the scoreboard should be hidden "
                                                                 "until the member's contest window is over."),
                                                     default=False)
     permanently_hide_scoreboard = models.BooleanField(verbose_name=_('permanently hide scoreboard'), default=False,
