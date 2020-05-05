@@ -12,8 +12,9 @@ from django.utils.translation import gettext, gettext_lazy as _, ungettext
 from reversion.admin import VersionAdmin
 
 from judge.models import LanguageLimit, Problem, ProblemClarification, ProblemTranslation, Profile, Solution
-from judge.widgets import AdminHeavySelect2MultipleWidget, AdminSelect2MultipleWidget, AdminSelect2Widget, \
-    CheckboxSelectMultipleWithSelectAll, HeavyPreviewAdminPageDownWidget, HeavyPreviewPageDownWidget
+from judge.utils.views import NoBatchDeleteMixin
+from judge.widgets import AdminHeavySelect2MultipleWidget, AdminMartorWidget, AdminSelect2MultipleWidget, \
+    AdminSelect2Widget, CheckboxSelectMultipleWithSelectAll
 
 
 class ProblemForm(ModelForm):
@@ -40,9 +41,8 @@ class ProblemForm(ModelForm):
                                                              attrs={'style': 'width: 100%'}),
             'types': AdminSelect2MultipleWidget,
             'group': AdminSelect2Widget,
+            'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
         }
-        if HeavyPreviewAdminPageDownWidget is not None:
-            widgets['description'] = HeavyPreviewAdminPageDownWidget(preview=reverse_lazy('problem_preview'))
 
 
 class ProblemCreatorListFilter(admin.SimpleListFilter):
@@ -71,8 +71,7 @@ class LanguageLimitInline(admin.TabularInline):
 
 class ProblemClarificationForm(ModelForm):
     class Meta:
-        if HeavyPreviewPageDownWidget is not None:
-            widgets = {'description': HeavyPreviewPageDownWidget(preview=reverse_lazy('comment_preview'))}
+        widgets = {'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('comment_preview')})}
 
 
 class ProblemClarificationInline(admin.StackedInline):
@@ -90,10 +89,8 @@ class ProblemSolutionForm(ModelForm):
     class Meta:
         widgets = {
             'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
+            'content': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('solution_preview')}),
         }
-
-        if HeavyPreviewAdminPageDownWidget is not None:
-            widgets['content'] = HeavyPreviewAdminPageDownWidget(preview=reverse_lazy('solution_preview'))
 
 
 class ProblemSolutionInline(admin.StackedInline):
@@ -105,8 +102,7 @@ class ProblemSolutionInline(admin.StackedInline):
 
 class ProblemTranslationForm(ModelForm):
     class Meta:
-        if HeavyPreviewAdminPageDownWidget is not None:
-            widgets = {'description': HeavyPreviewAdminPageDownWidget(preview=reverse_lazy('problem_preview'))}
+        widgets = {'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')})}
 
 
 class ProblemTranslationInline(admin.StackedInline):
@@ -116,7 +112,7 @@ class ProblemTranslationInline(admin.StackedInline):
     extra = 0
 
 
-class ProblemAdmin(VersionAdmin):
+class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
     fieldsets = (
         (None, {
             'fields': (

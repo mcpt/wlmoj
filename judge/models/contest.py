@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext, gettext_lazy as _
 from jsonfield import JSONField
+from lupa import LuaRuntime
 from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PYTHON
 
 from judge import contest_format
@@ -16,6 +17,11 @@ from judge.models.submission import Submission
 from judge.ratings import rate_contest
 
 __all__ = ['Contest', 'ContestTag', 'ContestParticipation', 'ContestProblem', 'ContestSubmission', 'Rating']
+
+
+class MinValueOrNoneValidator(MinValueValidator):
+    def compare(self, a, b):
+        return a is not None and b is not None and super().compare(a, b)
 
 
 class ContestTag(models.Model):
@@ -93,6 +99,9 @@ class Contest(models.Model):
                                                       help_text=('Whether the scoreboard should remain hidden '
                                                                  'permanently. Requires "hide scoreboard" to be '
                                                                  'set as well to have any effect.'))
+    view_contest_scoreboard = models.ManyToManyField(Profile, verbose_name=_('view contest scoreboard'), blank=True,
+                                                     related_name='view_contest_scoreboard',
+                                                     help_text=_('These users will be able to view the scoreboard.'))
     use_clarifications = models.BooleanField(verbose_name=_('no comments'),
                                              help_text=_("Use clarification system instead of comments."),
                                              default=True)
@@ -149,6 +158,10 @@ class Contest(models.Model):
                               help_text=_('A JSON object to serve as the configuration for the chosen contest format '
                                           'module. Leave empty to use None. Exact format depends on the contest format '
                                           'selected.'))
+    problem_label_script = models.TextField(verbose_name='contest problem label script', blank=True,
+                                            help_text='A custom Lua function to generate problem labels. Requires a '
+                                                      'single function with an integer parameter, the zero-indexed '
+                                                      'contest problem index, and returns a string, the label.')
 
     @cached_property
     def format_class(self):
@@ -157,6 +170,13 @@ class Contest(models.Model):
     @cached_property
     def format(self):
         return self.format_class(self, self.format_config)
+
+    @cached_property
+    def get_label_for_problem(self):
+        def DENY_ALL(obj, attr_name, is_setting):
+            raise AttributeError()
+        lua = LuaRuntime(attribute_filter=DENY_ALL, register_eval=False, register_builtins=False)
+        return lua.eval(self.problem_label_script or self.format.get_contest_problem_label_script())
 
     def clean(self):
         # Django will complain if you didn't fill in start_time or end_time, so we don't have to.
@@ -170,6 +190,16 @@ class Contest(models.Model):
             elif self.registration_start_time >= self.registration_end_time:
                 raise ValidationError('What is this? Registration ends before it starts?')
         self.format_class.validate(self.format_config)
+
+        try:
+            # a contest should have at least one problem, with contest problem index 0
+            # so test it to see if the script returns a valid label.
+            label = self.get_label_for_problem(0)
+        except Exception as e:
+            raise ValidationError('Contest problem label script: %s' % e)
+        else:
+            if not isinstance(label, str):
+                raise ValidationError('Contest problem label script: script should return a string.')
 
     def is_in_contest(self, user):
         if user.is_authenticated:
@@ -195,6 +225,8 @@ class Contest(models.Model):
             return True
         if not self.is_accessible_by(user):
             return False
+        if user.is_authenticated and self.view_contest_scoreboard.filter(id=user.profile.id).exists():
+            return True
         if not self.show_scoreboard:
             return False
         if self.partially_hide_scoreboard and not self.is_finished_contest(user):
@@ -207,27 +239,6 @@ class Contest(models.Model):
             if participation and participation.ended:
                 return True
         return False
-
-    @classmethod
-    def contests_list(cls, user):
-        profile = user.profile if user.is_authenticated else None
-        queryset = cls.objects.all().defer('description', 'registration_page')
-
-        if not user.has_perm('judge.see_private_contest'):
-            filter = Q(is_visible=True)
-            if user.is_authenticated:
-                filter |= Q(organizers=profile)
-            queryset = queryset.filter(filter)
-        if not user.has_perm('judge.edit_all_contest'):
-            filter = Q(is_private=False, is_organization_private=False)
-            if not user.is_authenticated or profile.is_external_user:
-                filter &= Q(is_external=True)
-            if user.is_authenticated:
-                filter |= Q(is_organization_private=True, organizations__in=profile.organizations.all())
-                filter |= Q(is_private_viewable=True, organizations__in=profile.organizations.all())
-                filter |= Q(is_private=True, private_contestants=profile)
-            queryset = queryset.filter(filter)
-        return queryset.distinct()
 
     @property
     def contest_window_length(self):
@@ -318,27 +329,64 @@ class Contest(models.Model):
             return True
         return False
 
-    def is_accessible_by(self, user):
-        # Contest is publicly visible
-        if self.is_visible:
-            if user.is_authenticated:
-                # User is in the organizations it is private to
-                if (self.is_private_viewable or self.is_organization_private) and \
-                        self.organizations.filter(id__in=user.profile.organizations.all()).exists():
-                    return True
-                # User is in the group of private contestants
-                if self.is_private and self.private_contestants.filter(id=user.profile.id).exists():
-                    return True
+    class Inaccessible(Exception):
+        pass
 
-            # Contest is not private
-            if not self.is_private and not self.is_organization_private:
-                if self.is_external:
-                    return True
-                if user.is_authenticated and not user.profile.is_external_user:
-                    return True
+    class PrivateContest(Exception):
+        pass
+
+    def access_check(self, user):
+        if (not user.is_authenticated or user.profile.is_external_user) and not self.is_external:
+            raise self.Inaccessible()
+
+        # If the user can view all contests
+        if user.has_perm('judge.see_private_contest'):
+            return
 
         # User can edit the contest
-        return self.is_editable_by(user)
+        if self.is_editable_by(user):
+            return
+
+        # Contest is not publicly visible
+        if not self.is_visible:
+            raise self.Inaccessible()
+
+        # Contest is not private
+        if not self.is_private and not self.is_organization_private:
+            return
+
+        if user.is_authenticated:
+            if self.view_contest_scoreboard.filter(id=user.profile.id).exists():
+                return
+
+            in_org = self.organizations.filter(id__in=user.profile.organizations.all()).exists()
+            in_users = self.private_contestants.filter(id=user.profile.id).exists()
+        else:
+            in_org = False
+            in_users = False
+
+        if not self.is_private and self.is_organization_private:
+            if in_org:
+                return
+            raise self.PrivateContest()
+
+        if self.is_private and not self.is_organization_private:
+            if in_users:
+                return
+            raise self.PrivateContest()
+
+        if self.is_private and self.is_organization_private:
+            if in_org and in_users:
+                return
+            raise self.PrivateContest()
+
+    def is_accessible_by(self, user):
+        try:
+            self.access_check(user)
+        except (self.Inaccessible, self.PrivateContest):
+            return False
+        else:
+            return True
 
     def is_editable_by(self, user):
         # If the user can edit all contests
@@ -351,6 +399,31 @@ class Contest(models.Model):
             return True
 
         return False
+
+    @classmethod
+    def get_visible_contests(cls, user):
+        if not user.is_authenticated:
+            return cls.objects.filter(is_visible=True, is_organization_private=False,
+                                      is_private=False, is_external=True) \
+                              .defer('description', 'registration_page').distinct()
+
+        queryset = cls.objects.defer('description', 'registration_page')
+        if user.profile.is_external_user:
+            queryset = queryset.filter(is_external=True)
+        if not (user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')):
+            q = Q(is_visible=True)
+            q &= (
+                Q(view_contest_scoreboard=user.profile) |
+                Q(is_organization_private=False, is_private=False) |
+                Q(is_organization_private=False, is_private=True, private_contestants=user.profile) |
+                Q(is_organization_private=True, is_private=False, organizations__in=user.profile.organizations.all()) |
+                Q(is_organization_private=True, is_private=True, organizations__in=user.profile.organizations.all(),
+                  private_contestants=user.profile)
+            )
+
+            q |= Q(organizers=user.profile)
+            queryset = queryset.filter(q)
+        return queryset.distinct()
 
     def rate(self):
         Rating.objects.filter(contest__end_time__gte=self.end_time).delete()
@@ -369,6 +442,8 @@ class Contest(models.Model):
             ('contest_rating', _('Rate contests')),
             ('contest_access_code', _('Contest access codes')),
             ('create_private_contest', _('Create private contests')),
+            ('change_contest_visibility', _('Change contest visibility')),
+            ('contest_problem_label', _('Edit contest problem label script')),
         )
         verbose_name = _('contest')
         verbose_name_plural = _('contests')
@@ -400,6 +475,7 @@ class ContestParticipation(models.Model):
     cumtime = models.PositiveIntegerField(verbose_name=_('cumulative time'), default=0)
     is_disqualified = models.BooleanField(verbose_name=_('is disqualified'), default=False,
                                           help_text=_('Whether this participation is disqualified.'))
+    tiebreaker = models.FloatField(verbose_name=_('tie-breaking field'), default=0.0)
     virtual = models.IntegerField(verbose_name=_('virtual participation id'), default=LIVE,
                                   help_text=_('0 means non-virtual, otherwise the n-th virtual participation.'))
     format_data = JSONField(verbose_name=_('contest format specific data'), null=True, blank=True)
@@ -489,9 +565,10 @@ class ContestProblem(models.Model):
     order = models.PositiveIntegerField(db_index=True, verbose_name=_('order'))
     output_prefix_override = models.IntegerField(verbose_name=_('output prefix length override'), null=True, blank=True)
     max_submissions = models.IntegerField(help_text=_('Maximum number of submissions for this problem, '
-                                                      'or 0 for no limit.'), default=0,
-                                          validators=[MinValueValidator(0, _('Why include a problem you '
-                                                                             'can\'t submit to?'))])
+                                                      'or leave blank for no limit.'),
+                                          default=None, null=True, blank=True,
+                                          validators=[MinValueOrNoneValidator(1, _('Why include a problem you '
+                                                                                   'can\'t submit to?'))])
 
     class Meta:
         unique_together = ('problem', 'contest')

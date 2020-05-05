@@ -11,10 +11,12 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _, ungettext
 from reversion.admin import VersionAdmin
 
+from django_ace import AceWidget
 from judge.models import Contest, ContestProblem, ContestSubmission, Profile, Rating
 from judge.ratings import rate_contest
-from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, AdminPagedownWidget, \
-    AdminSelect2MultipleWidget, AdminSelect2Widget, HeavyPreviewAdminPageDownWidget
+from judge.utils.views import NoBatchDeleteMixin
+from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, AdminMartorWidget, \
+    AdminSelect2MultipleWidget, AdminSelect2Widget
 
 
 class AdminHeavySelect2Widget(AdminHeavySelect2Widget):
@@ -37,11 +39,9 @@ class ContestTagAdmin(admin.ModelAdmin):
     actions_on_top = True
     actions_on_bottom = True
     form = ContestTagForm
-
-    if AdminPagedownWidget is not None:
-        formfield_overrides = {
-            TextField: {'widget': AdminPagedownWidget},
-        }
+    formfield_overrides = {
+        TextField: {'widget': AdminMartorWidget},
+    }
 
     def save_model(self, request, obj, form, change):
         super(ContestTagAdmin, self).save_model(request, obj, form, change)
@@ -86,6 +86,7 @@ class ContestForm(ModelForm):
             else:
                 self.fields['rate_exclude'].queryset = Profile.objects.none()
         self.fields['banned_users'].widget.can_add_related = False
+        self.fields['view_contest_scoreboard'].widget.can_add_related = False
 
     def clean(self):
         cleaned_data = super(ContestForm, self).clean()
@@ -100,14 +101,14 @@ class ContestForm(ModelForm):
             'tags': AdminSelect2MultipleWidget,
             'banned_users': AdminHeavySelect2MultipleWidget(data_view='profile_select2',
                                                             attrs={'style': 'width: 100%'}),
+            'view_contest_scoreboard': AdminHeavySelect2MultipleWidget(data_view='profile_select2',
+                                                                       attrs={'style': 'width: 100%'}),
+            'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
+            'registration_page': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
         }
 
-        if HeavyPreviewAdminPageDownWidget is not None:
-            widgets['description'] = HeavyPreviewAdminPageDownWidget(preview=reverse_lazy('contest_preview'))
-            widgets['registration_page'] = HeavyPreviewAdminPageDownWidget(preview=reverse_lazy('contest_preview'))
 
-
-class ContestAdmin(VersionAdmin):
+class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
     fieldsets = (
         (None, {'fields': ('key', 'name', 'organizers')}),
         (_('Settings'), {'fields': ('is_visible', 'is_external', 'is_virtualable', 'use_clarifications',
@@ -116,16 +117,16 @@ class ContestAdmin(VersionAdmin):
                                     'access_code')}),
         (_('Scheduling'), {'fields': ('start_time', 'end_time', 'time_limit')}),
         (_('Details'), {'fields': ('description', 'og_image', 'logo_override_image', 'tags', 'summary')}),
-        (_('Format'), {'fields': ('format_name', 'format_config')}),
+        (_('Format'), {'fields': ('format_name', 'format_config', 'problem_label_script')}),
         (_('Rating'), {'fields': ('is_rated', 'rate_all', 'rating_floor', 'rating_ceiling', 'rate_exclude')}),
         (_('Registration'), {'fields': ('require_registration', 'registration_start_time',
                                         'registration_end_time', 'registration_page')}),
         (_('Access'), {'fields': ('is_organization_private', 'is_private_viewable', 'organizations',
-                                  'is_private', 'private_contestants')}),
+                                  'is_private', 'private_contestants', 'view_contest_scoreboard')}),
         (_('Justice'), {'fields': ('banned_users',)}),
     )
     list_display = ('key', 'name', 'is_visible', 'is_rated', 'start_time', 'end_time', 'time_limit', 'user_count')
-    actions = ['make_visible', 'make_hidden']
+    search_fields = ('key', 'name')
     inlines = [ContestProblemInline]
     actions_on_top = True
     actions_on_bottom = True
@@ -133,6 +134,16 @@ class ContestAdmin(VersionAdmin):
     change_list_template = 'admin/judge/contest/change_list.html'
     filter_horizontal = ['rate_exclude']
     date_hierarchy = 'start_time'
+
+    def get_actions(self, request):
+        actions = super(ContestAdmin, self).get_actions(request)
+
+        if request.user.has_perm('judge.change_contest_visibility') or \
+                request.user.has_perm('judge.create_private_contest'):
+            for action in ('make_visible', 'make_hidden'):
+                actions[action] = self.get_action(action)
+
+        return actions
 
     def get_queryset(self, request):
         queryset = Contest.objects.all()
@@ -151,8 +162,33 @@ class ContestAdmin(VersionAdmin):
             readonly += ['access_code']
         if not request.user.has_perm('judge.create_private_contest'):
             readonly += ['is_private', 'private_contestants', 'is_organization_private',
-                         'is_private_viewable', 'organizations']
+                         'organizations', 'is_private_viewable']
+            if not request.user.has_perm('judge.change_contest_visibility'):
+                readonly += ['is_visible']
+        if not request.user.has_perm('judge.contest_problem_label'):
+            readonly += ['problem_label_script']
         return readonly
+
+    def save_model(self, request, obj, form, change):
+        # `is_visible` will not appear in `cleaned_data` if user cannot edit it
+        if form.cleaned_data.get('is_visible') and not request.user.has_perm('judge.change_contest_visibility'):
+            if not form.cleaned_data['is_private'] and not form.cleaned_data['is_organization_private']:
+                raise PermissionDenied
+            if not request.user.has_perm('judge.create_private_contest'):
+                raise PermissionDenied
+
+        super().save_model(request, obj, form, change)
+        # We need this flag because `save_related` deals with the inlines, but does not know if we have already rescored
+        self._rescored = False
+        if form.changed_data and any(f in form.changed_data for f in ('format_config', 'format_name')):
+            self._rescore(obj.key)
+            self._rescored = True
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        # Only rescored if we did not already do so in `save_model`
+        if not self._rescored and any(formset.has_changed() for formset in formsets):
+            self._rescore(form.cleaned_data['key'])
 
     def has_change_permission(self, request, obj=None):
         if not request.user.has_perm('judge.edit_own_contest'):
@@ -161,7 +197,13 @@ class ContestAdmin(VersionAdmin):
             return True
         return obj.organizers.filter(id=request.profile.id).exists()
 
+    def _rescore(self, contest_key):
+        from judge.tasks import rescore_contest
+        transaction.on_commit(rescore_contest.s(contest_key).delay)
+
     def make_visible(self, request, queryset):
+        if not request.user.has_perm('judge.change_contest_visibility'):
+            queryset = queryset.filter(Q(is_private=True) | Q(is_organization_private=True))
         count = queryset.update(is_visible=True)
         self.message_user(request, ungettext('%d contest successfully marked as visible.',
                                              '%d contests successfully marked as visible.',
@@ -169,7 +211,9 @@ class ContestAdmin(VersionAdmin):
     make_visible.short_description = _('Mark contests as visible')
 
     def make_hidden(self, request, queryset):
-        count = queryset.update(is_visible=False)
+        if not request.user.has_perm('judge.change_contest_visibility'):
+            queryset = queryset.filter(Q(is_private=True) | Q(is_organization_private=True))
+        count = queryset.update(is_visible=True)
         self.message_user(request, ungettext('%d contest successfully marked as hidden.',
                                              '%d contests successfully marked as hidden.',
                                              count) % count)
@@ -211,12 +255,8 @@ class ContestAdmin(VersionAdmin):
         if not request.user.has_perm('judge.contest_rating'):
             raise PermissionDenied()
         with transaction.atomic():
-            if connection.vendor == 'sqlite':
-                Rating.objects.all().delete()
-            else:
-                cursor = connection.cursor()
+            with connection.cursor() as cursor:
                 cursor.execute('TRUNCATE TABLE `%s`' % Rating._meta.db_table)
-                cursor.close()
             Profile.objects.update(rating=None)
             for contest in Contest.objects.filter(is_rated=True).order_by('end_time'):
                 rate_contest(contest)
@@ -232,8 +272,13 @@ class ContestAdmin(VersionAdmin):
             contest.rate()
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('admin:judge_contest_changelist')))
 
-    def get_form(self, *args, **kwargs):
-        form = super(ContestAdmin, self).get_form(*args, **kwargs)
+    def get_form(self, request, obj=None, **kwargs):
+        form = super(ContestAdmin, self).get_form(request, obj, **kwargs)
+        if 'problem_label_script' in form.base_fields:
+            # form.base_fields['problem_label_script'] does not exist when the user has only view permission
+            # on the model.
+            form.base_fields['problem_label_script'].widget = AceWidget('lua', request.profile.ace_theme)
+
         perms = ('edit_own_contest', 'edit_all_contest')
         form.base_fields['organizers'].queryset = Profile.objects.filter(
             Q(user__is_superuser=True) |
@@ -253,7 +298,7 @@ class ContestParticipationForm(ModelForm):
 
 class ContestParticipationAdmin(admin.ModelAdmin):
     fields = ('contest', 'user', 'real_start', 'virtual', 'is_disqualified')
-    list_display = ('contest', 'username', 'show_virtual', 'real_start', 'score', 'cumtime')
+    list_display = ('contest', 'username', 'show_virtual', 'real_start', 'score', 'cumtime', 'tiebreaker')
     actions = ['recalculate_results']
     actions_on_bottom = actions_on_top = True
     search_fields = ('contest__key', 'contest__name', 'user__user__username')
@@ -263,7 +308,7 @@ class ContestParticipationAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super(ContestParticipationAdmin, self).get_queryset(request).only(
             'contest__name', 'contest__format_name', 'contest__format_config',
-            'user__user__username', 'real_start', 'score', 'cumtime', 'virtual',
+            'user__user__username', 'real_start', 'score', 'cumtime', 'tiebreaker', 'virtual',
         )
 
     def save_model(self, request, obj, form, change):

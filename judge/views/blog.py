@@ -1,9 +1,8 @@
 from django.conf import settings
-from django.db.models import Count, Q
+from django.db.models import Count, Max, Q
 from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.functional import lazy
 from django.utils.translation import ugettext as _
 from django.views.generic import ListView
 
@@ -44,7 +43,7 @@ class PostList(ListView):
         context['first_page_href'] = reverse('home')
         context['page_prefix'] = reverse('blog_post_list')
         context['comments'] = Comment.most_recent(self.request.user, 10)
-        context['new_problems'] = Problem.objects.filter(is_public=True, is_organization_private=False) \
+        context['new_problems'] = Problem.get_public_problems() \
                                          .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
         context['page_titles'] = CacheDict(lambda page: Comment.get_page_title(page))
 
@@ -56,10 +55,10 @@ class PostList(ListView):
                 context['has_clarifications'] = clarifications.count() > 0
                 context['clarifications'] = clarifications.order_by('-date')
 
-        context['user_count'] = lazy(Profile.objects.count, int, int)
-        context['problem_count'] = lazy(Problem.objects.filter(is_public=True).count, int, int)
-        context['submission_count'] = lazy(Submission.objects.count, int, int)
-        context['language_count'] = lazy(Language.objects.count, int, int)
+        context['user_count'] = Profile.objects.count
+        context['problem_count'] = Problem.get_public_problems().count
+        context['submission_count'] = lambda: Submission.objects.aggregate(max_id=Max('id'))['max_id']
+        context['language_count'] = Language.objects.count
 
         context['post_comment_counts'] = {
             int(page[2:]): count for page, count in
@@ -70,7 +69,7 @@ class PostList(ListView):
 
         now = timezone.now()
 
-        visible_contests = Contest.contests_list(self.request.user).order_by('start_time')
+        visible_contests = Contest.get_visible_contests(self.request.user).order_by('start_time')
 
         context['current_contests'] = visible_contests.filter(start_time__lte=now, end_time__gt=now)
         context['future_contests'] = visible_contests.filter(start_time__gt=now)

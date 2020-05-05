@@ -29,7 +29,7 @@ def vote_comment(request, delta):
     if request.method != 'POST':
         return HttpResponseForbidden()
 
-    if 'id' not in request.POST:
+    if 'id' not in request.POST or len(request.POST['id']) > 10:
         return HttpResponseBadRequest()
 
     if not request.user.is_staff and not request.profile.submission_set.filter(points=F('problem__points')).exists():
@@ -81,6 +81,12 @@ class CommentMixin(object):
     model = Comment
     pk_url_kwarg = 'id'
     context_object_name = 'comment'
+
+    def get_object(self, queryset=None):
+        comment = super().get_object(queryset)
+        if not comment.is_accessible_by(self.request.user):
+            raise Http404()
+        return comment
 
 
 class CommentRevisionAjax(CommentMixin, DetailView):

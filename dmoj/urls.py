@@ -5,13 +5,13 @@ from django.contrib.auth import views as auth_views
 from django.contrib.sitemaps.views import sitemap
 from django.http import Http404, HttpResponsePermanentRedirect
 from django.templatetags.static import static
-from django.urls import reverse
+from django.urls import path, reverse
 from django.utils.functional import lazystr
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import RedirectView
+from martor.views import markdown_search_user
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
-from judge.forms import CustomAuthenticationForm
 from judge.sitemap import BlogPostSitemap, ContestSitemap, HomePageSitemap, OrganizationSitemap, ProblemSitemap, \
     SolutionSitemap, UrlSitemap, UserSitemap
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
@@ -23,6 +23,7 @@ from judge.views.register import ActivationView, RegistrationView
 from judge.views.select2 import AssigneeSelect2View, CommentSelect2View, ContestSelect2View, \
     ContestUserSearchSelect2View, OrganizationSelect2View, ProblemSelect2View, TicketUserSelect2View, \
     UserSearchSelect2View, UserSelect2View
+from judge.views.widgets import martor_image_uploader
 
 admin.autodiscover()
 
@@ -49,12 +50,7 @@ register_patterns = [
         TitledTemplateView.as_view(template_name='registration/registration_closed.html',
                                    title='Registration not allowed'),
         name='registration_disallowed'),
-    url(r'^login/$', auth_views.LoginView.as_view(
-        template_name='registration/login.html',
-        extra_context={'title': _('Login')},
-        authentication_form=CustomAuthenticationForm,
-        redirect_authenticated_user=True,
-    ), name='auth_login'),
+    url(r'^login/$', user.CustomLoginView.as_view(), name='auth_login'),
     url(r'^logout/$', user.UserLogoutView.as_view(), name='auth_logout'),
     url(r'^password/change/$', auth_views.PasswordChangeView.as_view(
         template_name='registration/password_change_form.html',
@@ -83,7 +79,8 @@ register_patterns = [
     url(r'^2fa/enable/$', totp.TOTPEnableView.as_view(), name='enable_2fa'),
     url(r'^2fa/disable/$', totp.TOTPDisableView.as_view(), name='disable_2fa'),
 
-    url(r'^api/token/generate/$', user.generate_api_token, name="generate_api_token"),
+    url(r'api/token/generate/$', user.generate_api_token, name='generate_api_token'),
+    url(r'api/token/remove/$', user.remove_api_token, name='remove_api_token'),
 ]
 
 
@@ -118,8 +115,8 @@ urlpatterns = [
         url(r'^/pdf$', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         url(r'^/pdf/(?P<language>[a-z-]+)$', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         url(r'^/clone', problem.ProblemClone.as_view(), name='problem_clone'),
-        url(r'^/submit$', problem.problem_submit, name='problem_submit'),
-        url(r'^/resubmit/(?P<submission>\d+)$', problem.problem_submit, name='problem_submit'),
+        url(r'^/submit$', problem.ProblemSubmit.as_view(), name='problem_submit'),
+        url(r'^/resubmit/(?P<submission>\d+)$', problem.ProblemSubmit.as_view(), name='problem_submit'),
 
         url(r'^/rank/', paged_list_view(ranked_submission.RankedSubmissions, 'ranked_submissions')),
         url(r'^/submissions/', paged_list_view(submission.ProblemSubmissions, 'chronological_submissions')),
@@ -158,7 +155,6 @@ urlpatterns = [
     url(r'^submission/(?P<submission>\d+)', include([
         url(r'^$', submission.SubmissionStatus.as_view(), name='submission_status'),
         url(r'^/abort$', submission.abort_submission, name='submission_abort'),
-        url(r'^/html$', submission.single_submission),
     ])),
 
     url(r'^users/', include([
@@ -264,8 +260,21 @@ urlpatterns = [
         url(r'^user/list$', api.api_v1_user_list),
         url(r'^user/info/(\w+)$', api.api_v1_user_info),
         url(r'^user/submissions/(\w+)$', api.api_v1_user_submissions),
+        url(r'^user/ratings/(\d+)$', api.api_v1_user_ratings),
         url(r'^submission/info/(\d+)$', api.api_v1_submission_detail),
         url(r'^submission/source/(\d+)$', api.api_v1_submission_source),
+        url(r'^v2/', include([
+            url(r'^contests$', api.api_v2.APIContestList.as_view()),
+            url(r'^contest/(?P<contest>\w+)$', api.api_v2.APIContestDetail.as_view()),
+            url(r'^problems$', api.api_v2.APIProblemList.as_view()),
+            url(r'^problem/(?P<problem>\w+)$', api.api_v2.APIProblemDetail.as_view()),
+            url(r'^users$', api.api_v2.APIUserList.as_view()),
+            url(r'^user/(?P<user>\w+)$', api.api_v2.APIUserDetail.as_view()),
+            url(r'^submissions$', api.api_v2.APISubmissionList.as_view()),
+            url(r'^submission/(?P<submission>\d+)$', api.api_v2.APISubmissionDetail.as_view()),
+            url(r'^organizations$', api.api_v2.APIOrganizationList.as_view()),
+            url(r'^participations$', api.api_v2.APIContestParticipationList.as_view()),
+        ])),
     ])),
 
     url(r'^blog/', paged_list_view(blog.PostList, 'blog_post_list')),
@@ -277,7 +286,7 @@ urlpatterns = [
 
     url(r'^widgets/', include([
         url(r'^rejudge$', widgets.rejudge_submission, name='submission_rejudge'),
-        url(r'^single_submission$', submission.single_submission_query, name='submission_single_query'),
+        url(r'^single_submission$', submission.single_submission, name='submission_single_query'),
         url(r'^submission_testcases$', submission.SubmissionTestCaseQuery.as_view(), name='submission_testcases_query'),
         url(r'^detect_timezone$', widgets.DetectTimezone.as_view(), name='detect_timezone'),
         url(r'^status-table$', status.status_table, name='status_table'),
@@ -293,6 +302,7 @@ urlpatterns = [
         ])),
 
         url(r'^preview/', include([
+            url(r'^default$', preview.DefaultMarkdownPreviewView.as_view(), name='default_preview'),
             url(r'^problem$', preview.ProblemMarkdownPreviewView.as_view(), name='problem_preview'),
             url(r'^blog$', preview.BlogMarkdownPreviewView.as_view(), name='blog_preview'),
             url(r'^contest$', preview.ContestMarkdownPreviewView.as_view(), name='contest_preview'),
@@ -303,6 +313,11 @@ urlpatterns = [
             url(r'^solution$', preview.SolutionMarkdownPreviewView.as_view(), name='solution_preview'),
             url(r'^license$', preview.LicenseMarkdownPreviewView.as_view(), name='license_preview'),
             url(r'^ticket$', preview.TicketMarkdownPreviewView.as_view(), name='ticket_preview'),
+        ])),
+
+        path('martor/', include([
+            path('upload-image', martor_image_uploader, name='martor_image_uploader'),
+            path('search-user', markdown_search_user, name='martor_search_user'),
         ])),
     ])),
 

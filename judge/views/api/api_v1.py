@@ -1,13 +1,12 @@
 from operator import attrgetter
 
-from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import F, Prefetch
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db.models import F, OuterRef, Prefetch, Subquery
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 
 from dmoj import settings
-from judge.models import Contest, ContestParticipation, ContestTag, Problem, Profile, Submission
+from judge.models import Contest, ContestParticipation, ContestTag, Problem, Profile, Rating, Submission
 
 
 def sane_time_repr(delta):
@@ -17,24 +16,9 @@ def sane_time_repr(delta):
     return '%02d:%02d:%02d' % (days, hours, minutes)
 
 
-def get_request_user(request):
-    try:
-        username = request.GET['id']
-        token = request.GET['token']
-        user = User.objects.get(username=username)
-        if user.profile.api_token != token:
-            raise ObjectDoesNotExist()
-    except (KeyError, ObjectDoesNotExist):
-        return request.user
-    else:
-        return user
-
-
 def api_v1_contest_list(request):
-    user = get_request_user(request)
-
-    queryset = Contest.contests_list(user).prefetch_related(
-        Prefetch('tags', queryset=ContestTag.objects.only('name'), to_attr='tag_list')).defer('description')
+    queryset = Contest.get_visible_contests(request.user).prefetch_related(
+        Prefetch('tags', queryset=ContestTag.objects.only('name'), to_attr='tag_list'))
 
     return JsonResponse({c.key: {
         'name': c.name,
@@ -46,23 +30,27 @@ def api_v1_contest_list(request):
 
 
 def api_v1_contest_detail(request, contest):
-    user = get_request_user(request)
-
     contest = get_object_or_404(Contest, key=contest)
 
-    if not contest.is_accessible_by(user):
+    if not contest.is_accessible_by(request.user):
         raise Http404()
 
-    in_contest = contest.is_in_contest(user)
-    can_see_rankings = contest.can_see_full_scoreboard(user)
+    in_contest = contest.is_in_contest(request.user)
+    can_see_rankings = contest.can_see_full_scoreboard(request.user)
 
     problems = list(contest.contest_problems.select_related('problem')
                     .defer('problem__description').order_by('order'))
+
+    new_ratings_subquery = Rating.objects.filter(participation=OuterRef('pk'))
+    old_ratings_subquery = (Rating.objects.filter(user=OuterRef('user__pk'),
+                                                  contest__end_time__lt=OuterRef('contest__end_time'))
+                            .order_by('-contest__end_time'))
     participations = (contest.users.filter(virtual=0, user__is_unlisted=False)
+                      .annotate(new_rating=Subquery(new_ratings_subquery.values('rating')[:1]))
+                      .annotate(old_rating=Subquery(old_ratings_subquery.values('rating')[:1]))
                       .prefetch_related('user__organizations')
                       .annotate(username=F('user__user__username'))
-                      .order_by('-score', 'cumtime') if can_see_rankings else [])
-
+                      .order_by('-score', 'cumtime', 'tiebreaker') if can_see_rankings else [])
     can_see_problems = (in_contest or contest.ended or contest.is_editable_by(request.user))
 
     return JsonResponse({
@@ -91,6 +79,9 @@ def api_v1_contest_detail(request, contest):
                 'user': participation.username,
                 'points': participation.score,
                 'cumtime': participation.cumtime,
+                'tiebreaker': participation.tiebreaker,
+                'old_rating': participation.old_rating,
+                'new_rating': participation.new_rating,
                 'is_disqualified': participation.is_disqualified,
                 'solutions': contest.format.get_problem_breakdown(participation, problems),
             } for participation in participations],
@@ -98,10 +89,7 @@ def api_v1_contest_detail(request, contest):
 
 
 def api_v1_problem_list(request):
-    user = get_request_user(request)
-
-    queryset = Problem.problems_list(user)
-
+    queryset = Problem.get_visible_problems(request.user)
     if settings.ENABLE_FTS and 'search' in request.GET:
         query = ' '.join(request.GET.getlist('search')).strip()
         if query:
@@ -117,27 +105,21 @@ def api_v1_problem_list(request):
 
 
 def api_v1_problem_info(request, problem):
-    user = get_request_user(request)
-
     p = get_object_or_404(Problem, code=problem)
-    if not p.is_accessible_by(user):
+    if not p.is_accessible_by(request.user, skip_contest_problem_check=True):
         raise Http404()
 
-    resp = {
+    return JsonResponse({
         'name': p.name,
         'authors': list(p.authors.values_list('user__username', flat=True)),
+        'types': list(p.types.values_list('full_name', flat=True)),
         'group': p.group.full_name,
         'time_limit': p.time_limit,
         'memory_limit': p.memory_limit,
+        'points': p.points,
+        'partial': p.partial,
         'languages': list(p.allowed_languages.values_list('key', flat=True)),
-    }
-
-    if user.profile.current_contest is None:
-        resp['types'] = list(p.types.values_list('full_name', flat=True))
-        resp['points'] = p.points
-        resp['partial'] = p.partial
-
-    return JsonResponse(resp)
+    })
 
 
 def api_v1_user_list(request):
@@ -150,13 +132,11 @@ def api_v1_user_list(request):
     } for username, points, performance_points, rank in queryset})
 
 
-def api_v1_user_info(request, username):
-    user = get_request_user(request)
-
-    profile = get_object_or_404(Profile, user__username=username)
-    submissions = list(Submission.objects.filter(case_points=F('case_total'), user=profile,
-                                                 problem__is_public=True, problem__is_organization_private=False)
-                                 .values('problem').distinct().values_list('problem__code', flat=True))
+def api_v1_user_info(request, user):
+    profile = get_object_or_404(Profile, user__username=user)
+    submissions = list(Submission.objects.filter(case_points=F('case_total'), user=profile, problem__is_public=True,
+                                                 problem__is_organization_private=False)
+                       .values('problem').distinct().values_list('problem__code', flat=True))
     resp = {
         'points': profile.points,
         'performance_points': profile.performance_points,
@@ -165,7 +145,7 @@ def api_v1_user_info(request, username):
         'organizations': list(profile.organizations.values_list('id', flat=True)),
     }
 
-    if user.has_perm('judge.view_name'):
+    if request.user.has_perm('judge.view_name'):
         resp['name'] = profile.user.get_full_name()
 
     last_rating = profile.ratings.last()
@@ -191,8 +171,8 @@ def api_v1_user_info(request, username):
     return JsonResponse(resp)
 
 
-def api_v1_user_submissions(request, username):
-    profile = get_object_or_404(Profile, user__username=username)
+def api_v1_user_submissions(request, user):
+    profile = get_object_or_404(Profile, user__username=user)
     subs = Submission.objects.filter(user=profile, problem__is_public=True, problem__is_organization_private=False)
 
     return JsonResponse({sub['id']: {
@@ -206,16 +186,31 @@ def api_v1_user_submissions(request, username):
     } for sub in subs.values('id', 'problem__code', 'time', 'memory', 'points', 'language__key', 'status', 'result')})
 
 
-def api_v1_submission_list(request):
-    pass
+def api_v1_user_ratings(request, page):
+    queryset = Profile.objects.filter(is_unlisted=False, user__is_active=True).values_list('user__username', 'rating')
+    paginator = Paginator(queryset, settings.DMOJ_API_PAGE_SIZE)
+
+    try:
+        page = paginator.page(int(page))
+    except (PageNotAnInteger, EmptyPage):
+        return JsonResponse({'error': 'page not found'}, status=422)
+    except (KeyError, ValueError):
+        return JsonResponse({'error': 'invalid page number'}, status=422)
+
+    return JsonResponse({
+        'pages': paginator.num_pages,
+        'users': {
+            username: {
+                'rating': rating,
+            } for username, rating in page
+        },
+    })
 
 
 def api_v1_submission_detail(request, submission):
-    user = get_request_user(request)
-
     submission = get_object_or_404(Submission, id=submission)
 
-    if not submission.is_accessible_by(user) or user.profile.current_contest is not None:
+    if not submission.can_see_detail(request.user) or request.profile.current_contest is not None:
         return JsonResponse({})
 
     resp = {
@@ -242,11 +237,9 @@ def api_v1_submission_detail(request, submission):
 
 
 def api_v1_submission_source(request, submission):
-    user = get_request_user(request)
-
     submission = get_object_or_404(Submission, id=submission)
 
-    if not submission.is_accessible_by(user) or user.profile.current_contest is not None:
+    if not submission.can_see_detail(request.user) or request.profile.current_contest is not None:
         return JsonResponse({})
 
     return JsonResponse({

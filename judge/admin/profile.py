@@ -1,12 +1,14 @@
 from django.contrib import admin
 from django.forms import ModelForm
+from django.urls import reverse_lazy
 from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy as _, ungettext
 from reversion.admin import VersionAdmin
 
 from django_ace import AceWidget
 from judge.models import Profile
-from judge.widgets import AdminPagedownWidget, AdminSelect2Widget, GenerateKeyTextInputButton
+from judge.utils.views import NoBatchDeleteMixin
+from judge.widgets import AdminMartorWidget, AdminSelect2Widget
 
 
 class ProfileForm(ModelForm):
@@ -25,10 +27,8 @@ class ProfileForm(ModelForm):
             'language': AdminSelect2Widget,
             'ace_theme': AdminSelect2Widget,
             'current_contest': AdminSelect2Widget,
-            'api_token': GenerateKeyTextInputButton(charset="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567", length=32),
+            'about': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('profile_preview')}),
         }
-        if AdminPagedownWidget is not None:
-            widgets['about'] = AdminPagedownWidget
 
 
 class TimezoneFilter(admin.SimpleListFilter):
@@ -44,13 +44,13 @@ class TimezoneFilter(admin.SimpleListFilter):
         return queryset.filter(timezone=self.value())
 
 
-class ProfileAdmin(VersionAdmin):
+class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
     form = ProfileForm
     fieldsets = (
         (None, {'fields': ('user', 'display_rank')}),
         (_('User Settings'), {'fields': ('organizations', 'timezone', 'language', 'ace_theme', 'math_engine')}),
         (_('Administration'), {'fields': ('is_external_user', 'mute', 'is_unlisted', 'is_totp_enabled',
-                                          'api_token', 'last_access', 'ip', 'current_contest', 'notes')}),
+                                          'last_access', 'ip', 'current_contest', 'notes')}),
         (_('Text Fields'), {'fields': ('about', 'user_script')}),
     )
     list_display = ('user', 'full_name', 'email', 'is_totp_enabled', 'is_external_user',
@@ -94,7 +94,6 @@ class ProfileAdmin(VersionAdmin):
 
     def full_name(self, obj):
         return obj.user.get_full_name()
-    full_name.admin_order_field = 'full_name'
     full_name.short_description = _('Name')
 
     def email(self, obj):

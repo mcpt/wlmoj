@@ -9,18 +9,27 @@ from django.utils.translation import gettext as _, gettext_noop
 
 from judge.models import Problem, Submission
 
-__all__ = ['contest_completed_ids', 'get_result_data', 'user_completed_ids', 'user_authored_ids', 'user_editable_ids']
+__all__ = ['contest_completed_ids', 'get_result_data', 'user_completed_ids', 'user_editable_ids', 'user_tester_ids']
 
 
-def user_authored_ids(profile):
-    result = set(Problem.objects.filter(authors=profile).values_list('id', flat=True))
-    return result
+def user_tester_ids(profile):
+    return set(Problem.objects.filter(testers=profile).values_list('id', flat=True))
 
 
 def user_editable_ids(profile):
-    result = set((Problem.objects.filter(authors=profile) | Problem.objects.filter(curators=profile))
-                 .values_list('id', flat=True))
-    return result
+    user = profile.user
+    if not user.has_perm('judge.edit_own_problem'):
+        return set()
+    if user.has_perm('judge.edit_all_problem') and user.has_perm('judge.see_restricted_problem'):
+        return set(Problem.objects.values_list('id', flat=True))
+
+    q = Q(authors=profile) | Q(curators=profile)
+
+    if user.has_perm('judge.edit_all_problem'):
+        q |= Q(is_public=True) | Q(is_restricted=False)
+    elif user.has_perm('judge.edit_public_problem'):
+        q |= Q(is_public=True)
+    return set(Problem.objects.filter(q).values_list('id', flat=True))
 
 
 def contest_completed_ids(participation):
@@ -112,8 +121,8 @@ def hot_problems(duration, limit):
     cache_key = 'hot_problems:%d:%d' % (duration.total_seconds(), limit)
     qs = cache.get(cache_key)
     if qs is None:
-        qs = Problem.objects.filter(is_public=True, is_organization_private=False,
-                                    submission__date__gt=timezone.now() - duration, points__gt=3, points__lt=25)
+        qs = Problem.get_public_problems() \
+                    .filter(submission__date__gt=timezone.now() - duration, points__gt=3, points__lt=25)
         qs0 = qs.annotate(k=Count('submission__user', distinct=True)).order_by('-k').values_list('k', flat=True)
 
         if not qs0:

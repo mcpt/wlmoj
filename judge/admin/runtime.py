@@ -1,15 +1,17 @@
 from django.conf.urls import url
 from django.db.models import TextField
-from django.forms import ModelForm, ModelMultipleChoiceField
+from django.forms import ModelForm, ModelMultipleChoiceField, TextInput
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from reversion.admin import VersionAdmin
 
 from django_ace import AceWidget
 from judge.models import Judge, Problem
-from judge.widgets import AdminHeavySelect2MultipleWidget, AdminPagedownWidget, GenerateKeyTextInputButton
+from judge.widgets import AdminHeavySelect2MultipleWidget, AdminMartorWidget
 
 
 class LanguageForm(ModelForm):
@@ -21,8 +23,7 @@ class LanguageForm(ModelForm):
         widget=AdminHeavySelect2MultipleWidget(data_view='problem_select2'))
 
     class Meta:
-        if AdminPagedownWidget is not None:
-            widgets = {'description': AdminPagedownWidget}
+        widgets = {'description': AdminMartorWidget}
 
 
 class LanguageAdmin(VersionAdmin):
@@ -44,11 +45,31 @@ class LanguageAdmin(VersionAdmin):
         return form
 
 
+class GenerateKeyTextInput(TextInput):
+    def render(self, name, value, attrs=None, renderer=None):
+        text = super(TextInput, self).render(name, value, attrs)
+        return mark_safe(text + format_html(
+            '''\
+<a href="#" onclick="return false;" class="button" id="id_{0}_regen">Regenerate</a>
+<script type="text/javascript">
+django.jQuery(document).ready(function ($) {{
+    $('#id_{0}_regen').click(function () {{
+        var length = 100,
+            charset = "abcdefghijklnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`~!@#$%^&*()_+-=|[]{{}};:,<>./?",
+            key = "";
+        for (var i = 0, n = charset.length; i < length; ++i) {{
+            key += charset.charAt(Math.floor(Math.random() * n));
+        }}
+        $('#id_{0}').val(key);
+    }});
+}});
+</script>
+''', name))
+
+
 class JudgeAdminForm(ModelForm):
     class Meta:
-        widgets = {'auth_key': GenerateKeyTextInputButton}
-        if AdminPagedownWidget is not None:
-            widgets['description'] = AdminPagedownWidget
+        widgets = {'auth_key': GenerateKeyTextInput, 'description': AdminMartorWidget}
 
 
 class JudgeAdmin(VersionAdmin):
@@ -62,6 +83,9 @@ class JudgeAdmin(VersionAdmin):
     )
     list_display = ('name', 'online', 'start_time', 'ping', 'load', 'last_ip')
     ordering = ['-online', 'name']
+    formfield_overrides = {
+        TextField: {'widget': AdminMartorWidget},
+    }
 
     def get_urls(self):
         return ([url(r'^(\d+)/disconnect/$', self.disconnect_view, name='judge_judge_disconnect'),
@@ -94,8 +118,3 @@ class JudgeAdmin(VersionAdmin):
         if obj.id and obj.is_blocked and obj.online:
             obj.disconnect(force=False)
         super(JudgeAdmin, self).save_model(request, obj, form, change)
-
-    if AdminPagedownWidget is not None:
-        formfield_overrides = {
-            TextField: {'widget': AdminPagedownWidget},
-        }

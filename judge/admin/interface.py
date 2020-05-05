@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.contrib.flatpages.admin import FlatPageAdmin, FlatpageForm
+from django.contrib.flatpages.admin import FlatPageAdmin as OldFlatPageAdmin, FlatpageForm as OldFlatpageForm
 from django.forms import ModelForm
 from django.urls import NoReverseMatch, reverse, reverse_lazy
 from django.utils.html import format_html
@@ -10,7 +10,7 @@ from reversion.admin import VersionAdmin
 
 from judge.dblock import LockModel
 from judge.models import NavigationBar
-from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, HeavyPreviewAdminPageDownWidget
+from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, AdminMartorWidget
 
 
 class NavigationBarAdmin(DraggableMPTTAdmin):
@@ -42,15 +42,13 @@ class NavigationBarAdmin(DraggableMPTTAdmin):
         return result
 
 
-class FlatPageForm(FlatpageForm):
-    class Meta:
-        widgets = {}
-        if HeavyPreviewAdminPageDownWidget is not None:
-            widgets['content'] = HeavyPreviewAdminPageDownWidget(preview=reverse_lazy('flatpage_preview'))
+class FlatpageForm(OldFlatpageForm):
+    class Meta(OldFlatpageForm.Meta):
+        widgets = {'content': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('flatpage_preview')})}
 
 
-class FlatPageAdmin(VersionAdmin, FlatPageAdmin):
-    form = FlatPageForm
+class FlatPageAdmin(VersionAdmin, OldFlatPageAdmin):
+    form = FlatpageForm
 
 
 class BlogPostForm(ModelForm):
@@ -63,11 +61,9 @@ class BlogPostForm(ModelForm):
             'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'organizations': AdminHeavySelect2MultipleWidget(data_view='organization_select2',
                                                              attrs={'style': 'width: 100%'}),
+            'content': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
+            'summary': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
         }
-
-        if HeavyPreviewAdminPageDownWidget is not None:
-            widgets['content'] = HeavyPreviewAdminPageDownWidget(preview=reverse_lazy('blog_preview'))
-            widgets['summary'] = HeavyPreviewAdminPageDownWidget(preview=reverse_lazy('blog_preview'))
 
 
 class BlogPostAdmin(VersionAdmin):
@@ -85,10 +81,9 @@ class BlogPostAdmin(VersionAdmin):
     date_hierarchy = 'publish_on'
 
     def has_change_permission(self, request, obj=None):
-        return (request.user.has_perm('judge.edit_all_post') or
-                request.user.has_perm('judge.change_blogpost') and (
-                    obj is None or
-                    obj.authors.filter(id=request.profile.id).exists()))
+        if obj is None:
+            return True
+        return obj.is_editable_by(request.user)
 
 
 class SolutionForm(ModelForm):
@@ -100,16 +95,13 @@ class SolutionForm(ModelForm):
         widgets = {
             'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'problem': AdminHeavySelect2Widget(data_view='problem_select2', attrs={'style': 'width: 250px'}),
+            'content': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('solution_preview')}),
         }
-
-        if HeavyPreviewAdminPageDownWidget is not None:
-            widgets['content'] = HeavyPreviewAdminPageDownWidget(preview=reverse_lazy('solution_preview'))
 
 
 class LicenseForm(ModelForm):
     class Meta:
-        if HeavyPreviewAdminPageDownWidget is not None:
-            widgets = {'text': HeavyPreviewAdminPageDownWidget(preview=reverse_lazy('license_preview'))}
+        widgets = {'text': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('license_preview')})}
 
 
 class LicenseAdmin(admin.ModelAdmin):

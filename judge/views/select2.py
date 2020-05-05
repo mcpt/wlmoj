@@ -54,14 +54,14 @@ class OrganizationSelect2View(Select2View):
 
 class ProblemSelect2View(Select2View):
     def get_queryset(self):
-        return Problem.problems_list(self.request.user) \
+        return Problem.get_visible_problems(self.request.user) \
                       .filter(Q(code__icontains=self.term) | Q(name__icontains=self.term)).distinct()
 
 
 class ContestSelect2View(Select2View):
     def get_queryset(self):
-        return Contest.contests_list(self.request.user) \
-                      .filter(Q(key__icontains=self.term) | Q(name__icontains=self.term)).distinct()
+        return Contest.get_visible_contests(self.request.user) \
+                      .filter(Q(key__icontains=self.term) | Q(name__icontains=self.term))
 
 
 class CommentSelect2View(Select2View):

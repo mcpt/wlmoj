@@ -11,7 +11,7 @@ class ProblemSitemap(Sitemap):
     priority = 0.8
 
     def items(self):
-        return Problem.problems_list(AnonymousUser()).values_list('code')
+        return Problem.get_public_problems().values_list('code')
 
     def location(self, obj):
         return reverse('problem_detail', args=obj)
@@ -33,7 +33,7 @@ class ContestSitemap(Sitemap):
     priority = 0.5
 
     def items(self):
-        return Contest.contests_list(AnonymousUser()).values_list('key')
+        return Contest.get_visible_contests(AnonymousUser()).values_list('key')
 
     def location(self, obj):
         return reverse('contest_view', args=obj)
