@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='contest',
             name='partially_hide_scoreboard',
-            field=models.BooleanField(default=False, help_text="Whether the scoreboard is hidden until the user's contest window ends", verbose_name='Partially hide scoreboard'),
+            field=models.BooleanField(default=False, help_text="Whether the scoreboard is hidden until the user's contest window ends.", verbose_name='Partially hide scoreboard'),
         ),
     ]
