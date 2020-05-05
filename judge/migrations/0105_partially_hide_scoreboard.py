@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0098_registration_data'),
+        ('judge', '0104_contestproblem_maxsubs'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='contest',
             name='partially_hide_scoreboard',
-            field=models.BooleanField(default=False, help_text="Whether the scoreboard should be shown remain hidden until the member's contest time is finished", verbose_name='Partially hide scoreboard'),
+            field=models.BooleanField(default=False, help_text="Whether the scoreboard should be hidden until the member's contest time is finished", verbose_name='Partially hide scoreboard'),
         ),
     ]
