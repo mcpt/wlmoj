@@ -9,7 +9,7 @@ runuser -u dmoj /opt/venv/bin/python3 -- manage.py migrate
 if [[ $WLMOJ_MODE == *"demo"* ]]; then
   runuser -u dmoj /opt/venv/bin/python3 -- manage.py loaddata navbar
   runuser -u dmoj /opt/venv/bin/python3 -- manage.py loaddata language_small
-  runuser -u dmoj /opt/venv/bin/python3 -- manage.py loaddata demo
+  runuser -u dmoj /opt/venv/bin/python3 -- manage.py loaddata docker
 fi
 
 if [[ $WLMOJ_MODE == *"celery"* ]]; then

@@ -55,9 +55,9 @@
             ],
             "creation_date": "2017-12-02T08:50:25.199Z",
             "is_open": true,
-            "slug": "dmoj",
-            "name": "DMOJ: Modern Online Judge",
-            "short_name": "DMOJ",
+            "slug": "wlmoj",
+            "name": "WLMOJ Docker",
+            "short_name": "WLMOJ",
             "slots": null
         },
         "model": "judge.organization",
@@ -132,7 +132,7 @@
             "authors": [
                 1
             ],
-            "content": "Welcome to DMOJ!\n\n```python\nprint \"Hello, World!\"\n```\n\nYou can get started by checking out [this problem we've added for you](/problem/aplusb).",
+            "content": "Welcome to WLMOJ!\n\n```python\nprint \"Hello, World!\"\n```\n\nYou can get started by checking out [this problem we've added for you](/problem/aplusb).",
             "og_image": "",
             "publish_on": "2017-12-02T05:00:00Z",
             "slug": "first-post",
@@ -164,9 +164,20 @@
     {
         "fields": {
             "domain": "localhost:8081",
-            "name": "DMOJ: Modern Online Judge"
+            "name": "WLMOJ Docker"
         },
         "model": "sites.site",
+        "pk": 1
+    },
+    {
+        "fields": {
+            "name": "ExampleJudge",
+            "created": "2022-05-23 00:00",
+            "auth_key": "earutFKRoNyF/OWiUZVejHiboz2uG3NqqIAWPpWpjqCwLKSZds1izqqbbmWjscoge8cHbVyKOXji4XXUUVfOCv+o9w/8kN8J4UYR",
+            "is_blocked": false,
+            "description": "docker judge"
+        },
+        "model": "judge.judge",
         "pk": 1
     }
 ]
