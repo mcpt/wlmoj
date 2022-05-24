@@ -22,6 +22,9 @@ from judge.models import WebAuthnCredential
 from judge.utils.two_factor import WebAuthnJSONEncoder, webauthn_encode
 from judge.utils.views import TitleMixin
 
+TOTP_CODE_LENGTH = settings.TOTP_CODE_LENGTH
+TOTP_CODE_INTERVAL = settings.TOTP_CODE_INTERVAL
+
 
 class TOTPView(TitleMixin, LoginRequiredMixin, FormView):
     form_class = TOTPForm
@@ -92,7 +95,7 @@ class TOTPEnableView(TOTPView):
 
     @classmethod
     def render_qr_code(cls, username, key):
-        totp = pyotp.TOTP(key)
+        totp = pyotp.TOTP(key, length=TOTP_CODE_LENGTH, interval=TOTP_CODE_INTERVAL)
         uri = totp.provisioning_uri(username, settings.SITE_NAME)
 
         qr = qrcode.QRCode(box_size=1)

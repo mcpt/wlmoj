@@ -585,6 +585,9 @@ CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 
 WEBAUTHN_RP_ID = None
 
+TOTP_CODE_LENGTH = 6
+TOTP_CODE_INTERVAL = 30
+
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
         exec(f.read(), globals())

@@ -18,7 +18,7 @@ from judge.models import Contest, Language, Organization, Problem, Profile, Subm
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, Select2MultipleWidget, Select2Widget
 
-TOTP_CODE_LENGTH = 6
+TOTP_CODE_LENGTH = settings.TOTP_CODE_LENGTH
 
 two_factor_validators_by_length = {
     TOTP_CODE_LENGTH: {
