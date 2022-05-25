@@ -1,7 +1,7 @@
 [
     {
         "fields": {
-            "about": "",
+            "about": "password is admin",
             "ace_theme": "github",
             "current_contest": null,
             "display_rank": "admin",
@@ -28,7 +28,7 @@
         "fields": {
             "date_joined": "2017-12-02T08:34:17.408Z",
             "email": "",
-            "first_name": "",
+            "first_name": "Admin",
             "groups": [
 
             ],
@@ -36,7 +36,7 @@
             "is_staff": true,
             "is_superuser": true,
             "last_login": "2017-12-02T08:34:31.840Z",
-            "last_name": "",
+            "last_name": "Administrator",
             "password": "pbkdf2_sha256$36000$eFRRZq4DgktS$md1gk0bBJb7PH/+3YEXkcCW8K+KmiI+y/amqR32G2DY=",
             "user_permissions": [
 
@@ -48,20 +48,132 @@
     },
     {
         "fields": {
-            "about": "This is a sample organization. You can use organizations to split up your user base, host private contests, and more.",
-            "access_code": null,
+            "about": "password is admin",
+            "ace_theme": "github",
+            "current_contest": null,
+            "display_rank": "user",
+            "ip": "10.0.2.2",
+            "language": 1,
+            "last_access": "2017-12-02T08:57:10.093Z",
+            "math_engine": "auto",
+            "mute": false,
+            "organizations": [
+                1,
+                2
+            ],
+            "performance_points": 0.0,
+            "points": 0.0,
+            "problem_count": 0,
+            "rating": null,
+            "timezone": "America/Toronto",
+            "user": 2,
+            "user_script": ""
+        },
+        "model": "judge.profile",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "date_joined": "2017-12-02T08:34:17.408Z",
+            "email": "",
+            "first_name": "LCC21",
+            "groups": [
+
+            ],
+            "is_active": true,
+            "is_staff": false,
+            "is_superuser": false,
+            "last_login": "2017-12-02T08:34:31.840Z",
+            "last_name": "Useday",
+            "password": "pbkdf2_sha256$36000$eFRRZq4DgktS$md1gk0bBJb7PH/+3YEXkcCW8K+KmiI+y/amqR32G2DY=",
+            "user_permissions": [
+
+            ],
+            "username": "LCC21_Useday"
+        },
+        "model": "auth.user",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "about": "password is admin",
+            "ace_theme": "github",
+            "current_contest": null,
+            "display_rank": "user",
+            "ip": "10.0.2.2",
+            "language": 1,
+            "last_access": "2017-12-02T08:57:10.093Z",
+            "math_engine": "auto",
+            "mute": false,
+            "organizations": [
+                1
+            ],
+            "performance_points": 0.0,
+            "points": 0.0,
+            "problem_count": 0,
+            "rating": null,
+            "timezone": "America/Toronto",
+            "user": 3,
+            "user_script": ""
+        },
+        "model": "judge.profile",
+        "pk": 3
+    },
+    {
+        "fields": {
+            "date_joined": "2017-12-02T08:34:17.408Z",
+            "email": "",
+            "first_name": "Eru",
+            "groups": [
+
+            ],
+            "is_active": true,
+            "is_staff": false,
+            "is_superuser": false,
+            "last_login": "2017-12-02T08:34:31.840Z",
+            "last_name": "Chitanda",
+            "password": "pbkdf2_sha256$36000$eFRRZq4DgktS$md1gk0bBJb7PH/+3YEXkcCW8K+KmiI+y/amqR32G2DY=",
+            "user_permissions": [
+
+            ],
+            "username": "L"
+        },
+        "model": "auth.user",
+        "pk": 3
+    },
+    {
+        "fields": {
+            "about": "William Lyon Mackenzie CI. Use access code \"please\".",
+            "access_code": "please",
             "admins": [
                 1
             ],
             "creation_date": "2017-12-02T08:50:25.199Z",
             "is_open": true,
-            "slug": "wlmoj",
-            "name": "WLMOJ Docker",
-            "short_name": "WLMOJ",
+            "slug": "wlmci",
+            "name": "William Lyon Mackenzie Collegiate Institute",
+            "short_name": "WLMCI",
             "slots": null
         },
         "model": "judge.organization",
         "pk": 1
+    },
+    {
+        "fields": {
+            "about": "Lyon's Computing Competition '2021 teams",
+            "access_code": null,
+            "admins": [
+                1
+            ],
+            "creation_date": "2021-12-02T08:50:25.199Z",
+            "is_open": false,
+            "slug": "lcc21",
+            "name": "LCC 2021 Competitors",
+            "short_name": "LCC21",
+            "slots": null
+        },
+        "model": "judge.organization",
+        "pk": 2
     },
     {
         "fields": {
@@ -179,5 +291,84 @@
         },
         "model": "judge.judge",
         "pk": 1
+    },
+    {
+        "fields": {
+            "key": "lcc21c5j",
+            "name": "LCC '21 Contest 5 Junior",
+            "start_time": "2022-05-24 00:00",
+            "end_time": "2022-05-25 00:00",
+            "registration_start_time": "2022-05-23 00:00",
+            "registration_end_time": "2022-05-24 00:00",
+            "authors": [1],
+            "is_visible": true,
+            "is_virtualable": true,
+            "is_organization_private": true,
+            "organizations": [2]
+        },
+        "model": "judge.contest",
+        "pk": 1
+    },
+    {
+        "fields": {
+            "contest": 1,
+            "problem": 1,
+            "points": 5,
+            "order": 1
+        },
+        "model": "judge.contestproblem",
+        "pk": 1
+    },
+    {
+        "fields": {
+            "key": "lcc21c4j",
+            "name": "LCC '21 Contest 4 Junior",
+            "start_time": "2022-04-24 00:00",
+            "end_time": "2022-04-25 00:00",
+            "registration_start_time": "2022-04-23 00:00",
+            "registration_end_time": "2022-04-24 00:00",
+            "authors": [1],
+            "is_visible": true,
+            "is_virtualable": false,
+            "is_organization_private": true,
+            "organizations": [2]
+        },
+        "model": "judge.contest",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "contest": 2,
+            "problem": 1,
+            "points": 5,
+            "order": 1
+        },
+        "model": "judge.contestproblem",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "key": "open21",
+            "name": "A Random Open Programming Contest",
+            "start_time": "2022-06-24 00:00",
+            "end_time": "2022-06-25 00:00",
+            "registration_start_time": "2022-06-23 00:00",
+            "registration_end_time": "2022-06-24 00:00",
+            "authors": [1],
+            "is_visible": true,
+            "is_virtualable": true
+        },
+        "model": "judge.contest",
+        "pk": 3
+    },
+    {
+        "fields": {
+            "contest": 3,
+            "problem": 1,
+            "points": 5,
+            "order": 1
+        },
+        "model": "judge.contestproblem",
+        "pk": 3
     }
 ]
