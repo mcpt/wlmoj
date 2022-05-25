@@ -436,23 +436,36 @@ class Contest(models.Model):
                 return
             raise self.PrivateContest()
 
-    # Assumes the user can access, to avoid the cost again
-    def is_live_joinable_by(self, user):
-        if not self.started:
+    def is_live_joinable_by(self, user, check_registered=True):
+        return self._is_joinable_by(user, False, check_registered)
+
+    def is_joinable_by(self, user, check_registered=True):
+        return self._is_joinable_by(user, True, check_registered)
+
+    def _is_joinable_by(self, user, virtual: bool, check_registered=True):
+        if not user.is_authenticated or not self.is_accessible_by(user):
+            return False
+        if self.ended:
             return False
 
-        if not user.is_authenticated:
-            return False
+        if user.has_perm('judge.join_all_contest'):
+            return True
 
         if user.profile.id in self.editor_ids or user.profile.id in self.tester_ids:
             return False
 
-        if self.has_completed_contest(user):
+        if check_registered and not self.is_registered(user):
             return False
 
-        if self.limit_join_organizations:
-            return self.join_organizations.filter(id__in=user.profile.organizations.all()).exists()
-        return True
+        if not self.is_private and not self.is_organization_private and not self.is_private_viewable:
+            return True
+
+        if (self.is_private_viewable or self.is_organization_private) and \
+                self.organizations.filter(id__in=user.profile.organizations.all()).exists():
+            return True
+        if self.is_private and self.private_contestants.filter(id=user.profile.id).exists():
+            return True
+        return False
 
     # Also skips access check
     def is_spectatable_by(self, user):

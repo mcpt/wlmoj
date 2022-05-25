@@ -210,14 +210,14 @@
                     <input type="submit" class="unselectable button full participate-button"
                            value="{{ _('Spectate') }}">
                 </form>
-            {% elif contest.is_joinable_by(request.user) %}
+            {% elif contest.can_register(request.user) %}
+                {{ contest_register(contest, request.user) }}
+            {% else %}
                 <form action="{{ url('contest_join', contest.key) }}" method="post">
                     {% csrf_token %}
                     <input type="submit" class="unselectable button full participate-button disabled"
                            value="{{ _('Join') }}" disabled title="{{ _('You cannot join this contest.') }}">
                 </form>
-            {% else %}
-                {{ contest_register(contest, request.user) }}
             {% endif %}
         </td>
     {% endif %}
