@@ -84,7 +84,6 @@ class OrganizationHome(OrganizationDetailView):
         context = super(OrganizationHome, self).get_context_data(**kwargs)
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()
-        
         context['is_member'] = self.request.profile in self.object if self.request.user.is_authenticated else False
         context['new_problems'] = Problem.objects.filter(is_public=True, is_organization_private=True,
                                                          organizations=self.object) \
