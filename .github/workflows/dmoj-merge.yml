@@ -1,21 +1,41 @@
 name: dmoj-merge
 on:
   schedule:
-    # Mondays at noon
-    - cron: '0 12 * * 1'
-  repository_dispatch:
-    types: [manual-run]
+    - cron:  '0 7 * * 1,4'
+    # scheduled at 07:00 every Monday and Thursday
+
+  workflow_dispatch:  # click the button on Github repo!
+
 
 jobs:
-  dmoj-merge:
+  sync_with_upstream:
     runs-on: ubuntu-latest
+    name: Sync main with upstream latest
+
     steps:
-    - uses: mcpt/fork-sync@v1.1.7-mcpt
-      name: Create pull request
+    # Step 1: run a standard checkout action, provided by github
+    - name: Checkout main
+      uses: actions/checkout@v2
       with:
-        github_token: ${{ secrets.TOKEN }}
-        owner: dmoj
-        base: master
-        head: master
-        pr_title: Merge DMOJ into DMOJ-merge
-        pr_message: This is an automated pull request to merge upstream changes into master.
+        ref: main
+        # submodules: 'recursive'     ### may be needed in your situation
+
+    # Step 2: run this sync action - specify the upstream repo, upstream branch to sync with, and target sync branch
+    - name: Pull (Fast-Forward) upstream changes
+      id: sync
+      uses: aormsby/Fork-Sync-With-Upstream-action@v2.1
+      with:
+        upstream_repository: DMOJ/online-judge
+        upstream_branch: master
+        target_branch: dmoj
+        git_pull_args: --ff-only                    # optional arg use, defaults to simple 'pull'
+        github_token: ${{ secrets.GITHUB_TOKEN }}   # optional, for accessing repos that require authentication
+
+    # Step 3: Display a message if 'sync' step had new commits (simple test)
+    - name: Check for new commits
+      if: steps.sync.outputs.has_new_commits
+      run: echo "There were new commits."
+
+    # Step 4: Print a helpful timestamp for your records (not required, just nice)
+    - name: Timestamp
+      run: date
