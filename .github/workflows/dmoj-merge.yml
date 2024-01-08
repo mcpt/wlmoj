@@ -15,7 +15,7 @@ jobs:
     steps:
     # Step 1: run a standard checkout action, provided by github
     - name: Checkout main
-      uses: actions/checkout@4
+      uses: actions/checkout@v4
       with:
         ref: dmoj
         # submodules: 'recursive'     ### may be needed in your situation
