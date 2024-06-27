@@ -4,7 +4,7 @@ import socket
 from celery import Celery
 from celery.signals import task_failure
 
-app = Celery('dmoj')
+app = Celery('wlmoj')
 
 from django.conf import settings  # noqa: E402, I202, django must be imported here
 app.config_from_object(settings, namespace='CELERY')

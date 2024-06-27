@@ -6,7 +6,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'wlmoj.settings')
 gevent.monkey.patch_all()
 
 # noinspection PyUnresolvedReferences
-import dmoj_install_pymysql  # noqa: E402, F401, I100, I202, imported for side effect
+import wlmoj_install_pymysql  # noqa: E402, F401, I100, I202, imported for side effect
 
 import django  # noqa: E402, F401, I100, I202, django must be imported here
 django.setup()
