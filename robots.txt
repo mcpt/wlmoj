@@ -11,6 +11,7 @@ Disallow: /contest/*/moss
 Disallow: /contest/*/participation
 Disallow: /contest/*/participations
 Disallow: /contest/*/rank
+Disallow: /contest/*/register
 Disallow: /contests/tag
 Disallow: /contest/*/stats
 Disallow: /contest/*/submissions
