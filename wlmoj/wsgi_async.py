@@ -2,7 +2,7 @@ import os
 
 import gevent.monkey  # noqa: I100, gevent must be imported here
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dmoj.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'wlmoj.settings')
 gevent.monkey.patch_all()
 
 # noinspection PyUnresolvedReferences
