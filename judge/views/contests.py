@@ -548,7 +548,7 @@ class ContestCalendar(TitleMixin, ContestListMixin, TemplateView):
 class ContestICal(TitleMixin, ContestListMixin, BaseListView):
     def generate_ical(self):
         cal = ICalendar()
-        cal.add('prodid', '-//DMOJ//NONSGML Contests Calendar//')
+        cal.add('prodid', '-//WLMOJ//NONSGML Contests Calendar//')
         cal.add('version', '2.0')
 
         now = timezone.now().astimezone(timezone.utc)

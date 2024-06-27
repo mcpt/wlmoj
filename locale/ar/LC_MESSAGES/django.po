@@ -17,95 +17,95 @@ msgstr ""
 "X-Crowdin-File: django.po\n"
 "X-Crowdin-File-ID: 10\n"
 
-#: dmoj/settings.py:395
+#: wlmoj/settings.py:395
 msgid "Catalan"
 msgstr "الكاتالونية"
 
-#: dmoj/settings.py:396
+#: wlmoj/settings.py:396
 msgid "German"
 msgstr "الألمانية"
 
-#: dmoj/settings.py:397
+#: wlmoj/settings.py:397
 msgid "Greek"
 msgstr ""
 
-#: dmoj/settings.py:398
+#: wlmoj/settings.py:398
 msgid "English"
 msgstr "الانجليزية"
 
-#: dmoj/settings.py:399
+#: wlmoj/settings.py:399
 msgid "Spanish"
 msgstr "الإسبانية"
 
-#: dmoj/settings.py:400
+#: wlmoj/settings.py:400
 msgid "French"
 msgstr "الفرنسية"
 
-#: dmoj/settings.py:401
+#: wlmoj/settings.py:401
 msgid "Croatian"
 msgstr "الكرواتية"
 
-#: dmoj/settings.py:402
+#: wlmoj/settings.py:402
 msgid "Hungarian"
 msgstr "الهنغارية"
 
-#: dmoj/settings.py:403
+#: wlmoj/settings.py:403
 msgid "Japanese"
 msgstr "يابانية"
 
-#: dmoj/settings.py:404
+#: wlmoj/settings.py:404
 msgid "Kazakh"
 msgstr ""
 
-#: dmoj/settings.py:405
+#: wlmoj/settings.py:405
 msgid "Korean"
 msgstr "الكورية"
 
-#: dmoj/settings.py:406
+#: wlmoj/settings.py:406
 msgid "Brazilian Portuguese"
 msgstr "البرتغالية"
 
-#: dmoj/settings.py:407
+#: wlmoj/settings.py:407
 msgid "Romanian"
 msgstr ""
 
-#: dmoj/settings.py:408
+#: wlmoj/settings.py:408
 msgid "Russian"
 msgstr ""
 
-#: dmoj/settings.py:409
+#: wlmoj/settings.py:409
 msgid "Serbian (Latin)"
 msgstr ""
 
-#: dmoj/settings.py:410
+#: wlmoj/settings.py:410
 msgid "Turkish"
 msgstr ""
 
-#: dmoj/settings.py:411
+#: wlmoj/settings.py:411
 msgid "Vietnamese"
 msgstr ""
 
-#: dmoj/settings.py:412
+#: wlmoj/settings.py:412
 msgid "Simplified Chinese"
 msgstr ""
 
-#: dmoj/settings.py:413
+#: wlmoj/settings.py:413
 msgid "Traditional Chinese"
 msgstr ""
 
-#: dmoj/urls.py:31
+#: wlmoj/urls.py:31
 msgid "Activation Successful!"
 msgstr ""
 
-#: dmoj/urls.py:39
+#: wlmoj/urls.py:39
 msgid "Registration Completed"
 msgstr ""
 
-#: dmoj/urls.py:43
+#: wlmoj/urls.py:43
 msgid "Registration Not Allowed"
 msgstr ""
 
-#: dmoj/urls.py:95 templates/base.html:193
+#: wlmoj/urls.py:95 templates/base.html:193
 msgid "Home"
 msgstr ""
 
@@ -3956,7 +3956,7 @@ msgid "This site works best with JavaScript enabled."
 msgstr ""
 
 #: templates/base.html:293
-msgid "proudly powered by **DMOJ**"
+msgid "proudly powered by **wlmoj**"
 msgstr ""
 
 #: templates/blog/content.html:13 templates/comments/list.html:89
