@@ -9,4 +9,4 @@ except ImportError:
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dmoj.settings')
 
 # noinspection PyUnresolvedReferences
-from dmoj.celery import app  # noqa: E402, F401, imported for side effect
+from wlmoj.celery import app  # noqa: E402, F401, imported for side effect

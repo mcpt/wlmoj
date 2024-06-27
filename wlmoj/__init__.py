@@ -1,1 +1,1 @@
-from dmoj.celery import app as celery_app
+from wlmoj.celery import app as celery_app
