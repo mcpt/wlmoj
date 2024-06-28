@@ -325,9 +325,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 SILENCED_SYSTEM_CHECKS = ['urls.W002', 'fields.W342']
 
-ROOT_URLCONF = 'wlmoj.urls'
+ROOT_URLCONF = 'dmoj.urls'
 LOGIN_REDIRECT_URL = '/user'
-WSGI_APPLICATION = 'wlmoj.wsgi.application'
+WSGI_APPLICATION = 'dmoj.wsgi.application'
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 TEMPLATES = [

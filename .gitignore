@@ -6,10 +6,10 @@
 *.mo
 *~
 *.swp
-wlmoj/local_settings.py
+dmoj/local_settings.py
 resources/dark
 resources/martor-description.css
-resources/select2-wlmoj.css
+resources/select2-dmoj.css
 resources/style.css
 resources/vars.scss
 sass_processed

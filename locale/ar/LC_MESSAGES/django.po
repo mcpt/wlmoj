@@ -17,95 +17,95 @@ msgstr ""
 "X-Crowdin-File: django.po\n"
 "X-Crowdin-File-ID: 10\n"
 
-#: wlmoj/settings.py:395
+#: dmoj/settings.py:395
 msgid "Catalan"
 msgstr "الكاتالونية"
 
-#: wlmoj/settings.py:396
+#: dmoj/settings.py:396
 msgid "German"
 msgstr "الألمانية"
 
-#: wlmoj/settings.py:397
+#: dmoj/settings.py:397
 msgid "Greek"
 msgstr ""
 
-#: wlmoj/settings.py:398
+#: dmoj/settings.py:398
 msgid "English"
 msgstr "الانجليزية"
 
-#: wlmoj/settings.py:399
+#: dmoj/settings.py:399
 msgid "Spanish"
 msgstr "الإسبانية"
 
-#: wlmoj/settings.py:400
+#: dmoj/settings.py:400
 msgid "French"
 msgstr "الفرنسية"
 
-#: wlmoj/settings.py:401
+#: dmoj/settings.py:401
 msgid "Croatian"
 msgstr "الكرواتية"
 
-#: wlmoj/settings.py:402
+#: dmoj/settings.py:402
 msgid "Hungarian"
 msgstr "الهنغارية"
 
-#: wlmoj/settings.py:403
+#: dmoj/settings.py:403
 msgid "Japanese"
 msgstr "يابانية"
 
-#: wlmoj/settings.py:404
+#: dmoj/settings.py:404
 msgid "Kazakh"
 msgstr ""
 
-#: wlmoj/settings.py:405
+#: dmoj/settings.py:405
 msgid "Korean"
 msgstr "الكورية"
 
-#: wlmoj/settings.py:406
+#: dmoj/settings.py:406
 msgid "Brazilian Portuguese"
 msgstr "البرتغالية"
 
-#: wlmoj/settings.py:407
+#: dmoj/settings.py:407
 msgid "Romanian"
 msgstr ""
 
-#: wlmoj/settings.py:408
+#: dmoj/settings.py:408
 msgid "Russian"
 msgstr ""
 
-#: wlmoj/settings.py:409
+#: dmoj/settings.py:409
 msgid "Serbian (Latin)"
 msgstr ""
 
-#: wlmoj/settings.py:410
+#: dmoj/settings.py:410
 msgid "Turkish"
 msgstr ""
 
-#: wlmoj/settings.py:411
+#: dmoj/settings.py:411
 msgid "Vietnamese"
 msgstr ""
 
-#: wlmoj/settings.py:412
+#: dmoj/settings.py:412
 msgid "Simplified Chinese"
 msgstr ""
 
-#: wlmoj/settings.py:413
+#: dmoj/settings.py:413
 msgid "Traditional Chinese"
 msgstr ""
 
-#: wlmoj/urls.py:31
+#: dmoj/urls.py:31
 msgid "Activation Successful!"
 msgstr ""
 
-#: wlmoj/urls.py:39
+#: dmoj/urls.py:39
 msgid "Registration Completed"
 msgstr ""
 
-#: wlmoj/urls.py:43
+#: dmoj/urls.py:43
 msgid "Registration Not Allowed"
 msgstr ""
 
-#: wlmoj/urls.py:95 templates/base.html:193
+#: dmoj/urls.py:95 templates/base.html:193
 msgid "Home"
 msgstr ""
 

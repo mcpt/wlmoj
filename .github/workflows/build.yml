@@ -33,7 +33,7 @@ jobs:
         pip install wheel
         pip install -r requirements.txt
         pip install mysqlclient coverage
-        cp .ci.settings.py wlmoj/local_settings.py
+        cp .ci.settings.py dmoj/local_settings.py
     - name: Start MySQL
       run: sudo systemctl start mysql.service
     - name: Run unit tests
