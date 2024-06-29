@@ -16,3 +16,4 @@ sass_processed
 venv
 dmojsite
 <desired bridge log path>
+bridge.log
