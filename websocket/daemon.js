@@ -1,4 +1,4 @@
-var config = require('/config');
+var config = require('./config');
 var set = require('simplesets').Set;
 var queue = require('qu');
 var WebSocketServer = require('ws').Server;
