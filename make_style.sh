@@ -14,7 +14,7 @@ if ! [ -x "$(command -v autoprefixer)" ]; then
   exit 1
 fi
 
-cd "/site" || exit 1
+cd "$(dirname "$0")" || exit
 
 build_style() {
   echo "Creating $1 style..."
