@@ -14,7 +14,7 @@ if ! [ -x "$(command -v autoprefixer)" ]; then
   exit 1
 fi
 
-cd "$(dirname "$0")" || exit
+cd "/site" || exit 1
 
 build_style() {
   echo "Creating $1 style..."
@@ -22,6 +22,7 @@ build_style() {
   sass resources:sass_processed
   postcss sass_processed/style.css sass_processed/martor-description.css sass_processed/select2-dmoj.css --verbose --use autoprefixer -d $2
 }
+
 
 build_style 'default' 'resources'
 build_style 'dark' 'resources/dark'
