@@ -10,15 +10,15 @@ from judge.contest_format.default import DefaultContestFormat
 from judge.contest_format.registry import register_contest_format
 
 
-@register_contest_format("ics3u")
+@register_contest_format('ics3u')
 class ICS3UContestFormat(DefaultContestFormat):
-    name = gettext_lazy("ICS3U")
+    name = gettext_lazy('ICS3U')
 
     @classmethod
     def validate(cls, config):
         if config is not None and (not isinstance(config, dict) or config):
             raise ValidationError(
-                "ICS3U contest expects no config or empty dict as config"
+                'ICS3U contest expects no config or empty dict as config',
             )
 
     def __init__(self, contest, config):
@@ -29,22 +29,22 @@ class ICS3UContestFormat(DefaultContestFormat):
         format_data = {}
 
         queryset = (
-            participation.submissions.values("problem_id")
+            participation.submissions.values('problem_id')
             .filter(
                 points=Subquery(
-                    participation.submissions.filter(problem_id=OuterRef("problem_id"))
-                    .order_by("-points")
-                    .values("points")[:1]
-                )
+                    participation.submissions.filter(problem_id=OuterRef('problem_id'))
+                    .order_by('-points')
+                    .values('points')[:1],
+                ),
             )
-            .annotate(disqualified=Max("is_disqualified"))
-            .values_list("problem_id", "disqualified", "points")
+            .annotate(disqualified=Max('is_disqualified'))
+            .values_list('problem_id', 'disqualified', 'points')
         )
 
         for problem_id, disqualified, points in queryset:
             format_data[str(problem_id)] = {
-                "points": points,
-                "disqualified": disqualified,
+                'points': points,
+                'disqualified': disqualified,
             }
             score += points
 
@@ -58,31 +58,29 @@ class ICS3UContestFormat(DefaultContestFormat):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
         if format_data:
             pretest = (
-                "pretest-"
+                'pretest-'
                 if self.contest.run_pretests_only and contest_problem.is_pretested
-                else ""
+                else ''
             )
-            extra = " disqualified" if format_data["disqualified"] else ""
+            extra = ' disqualified' if format_data['disqualified'] else ''
 
             return format_html(
                 '<td class="{state}"><a href="{url}">{points}</a></td>',
-                state=pretest
-                + self.best_solution_state(
-                    format_data["points"], contest_problem.points
-                )
-                + extra,
+                state=pretest + self.best_solution_state(
+                    format_data['points'], contest_problem.points,
+                ) + extra,
                 url=reverse(
-                    "contest_user_submissions",
+                    'contest_user_submissions',
                     args=[
                         self.contest.key,
                         participation.user.user.username,
                         contest_problem.problem.code,
                     ],
                 ),
-                points=floatformat(format_data["points"]),
+                points=floatformat(format_data['points']),
             )
         else:
-            return mark_safe("<td></td>")
+            return mark_safe('<td></td>')
 
     def display_participation_result(self, participation):
         return format_html(

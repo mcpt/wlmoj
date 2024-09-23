@@ -1,5 +1,6 @@
 import os
 from os.path import join
+
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
@@ -370,7 +371,7 @@ urlpatterns = [
     ])),
 ]
 
-favicon_paths = os.listdir(join(settings.STATIC_ROOT, "icons"))
+favicon_paths = os.listdir(join(settings.STATIC_ROOT, 'icons'))
 
 static_lazy = lazy(static, str)
 for favicon in favicon_paths:
