@@ -371,7 +371,7 @@ urlpatterns = [
     ])),
 ]
 
-favicon_paths = os.listdir(join(settings.STATIC_ROOT, 'icons'))
+favicon_paths = os.listdir(join(settings.DMOJ_RESOURCES, 'icons'))
 
 static_lazy = lazy(static, str)
 for favicon in favicon_paths:
