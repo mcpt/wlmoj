@@ -371,13 +371,13 @@ urlpatterns = [
     ])),
 ]
 
-favicon_paths = os.listdir(join(settings.DMOJ_RESOURCES, 'icons'))
-
-static_lazy = lazy(static, str)
-for favicon in favicon_paths:
-    urlpatterns.append(path(favicon, RedirectView.as_view(
-        url=static_lazy('icons/' + favicon),
-    )))
+if os.path.exists(join(settings.DMOJ_RESOURCES, 'icons')): # if it doesn't exist, we're probably running on bridged
+    favicon_paths = os.listdir(join(settings.DMOJ_RESOURCES, 'icons'))
+    static_lazy = lazy(static, str)
+    for favicon in favicon_paths:
+        urlpatterns.append(path(favicon, RedirectView.as_view(
+            url=static_lazy('icons/' + favicon),
+        )))
 
 handler404 = 'judge.views.error.error404'
 handler403 = 'judge.views.error.error403'
