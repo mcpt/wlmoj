@@ -371,7 +371,7 @@ urlpatterns = [
     ])),
 ]
 
-if os.path.exists(join(settings.DMOJ_RESOURCES, 'icons')): # if it doesn't exist, we're probably running on bridged
+if os.path.exists(join(settings.DMOJ_RESOURCES, 'icons')):  # if it doesn't exist, we're probably running on bridged
     favicon_paths = os.listdir(join(settings.DMOJ_RESOURCES, 'icons'))
     static_lazy = lazy(static, str)
     for favicon in favicon_paths:
