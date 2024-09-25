@@ -95,7 +95,7 @@ def site_theme(request):
 
 def math_setting(request):
     caniuse = CanIUse(request.META.get('HTTP_USER_AGENT', ''))
-    
+
     # Middleware populating `profile` may not have loaded at this point if we're called from an error context.
     if hasattr(request.user, 'profile'):
         engine = request.profile.math_engine
