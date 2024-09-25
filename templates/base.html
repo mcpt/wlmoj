@@ -36,8 +36,9 @@
     {% compress css %}
         {# TODO: once dark mode support is better, enable for all users by deleting the else branch #}
         {% if perms.judge.test_site %}
-                <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}" media="(prefers-color-scheme: light)">
-                <link rel="stylesheet" href="{{ static(DARK_STYLE_CSS) }}" media="(prefers-color-scheme: dark)">
+            {% if PREFERRED_STYLE_CSS is not none %}
+                <link rel="stylesheet" href="{{ static(PREFERRED_STYLE_CSS) }}">
+            {% endif %}
         {% else %}
             <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}">
         {% endif %}
