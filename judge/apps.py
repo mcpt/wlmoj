@@ -1,7 +1,9 @@
 from django.apps import AppConfig
 from django.db import DatabaseError
 from django.utils.translation import gettext_lazy
+import logging
 
+logger = logging.getLogger("judge.apps")
 
 class JudgeAppConfig(AppConfig):
     name = 'judge'
@@ -23,5 +25,7 @@ class JudgeAppConfig(AppConfig):
                 # These poor profileless users
                 profile = Profile(user=user, language=lang)
                 profile.save()
+                logger.info('Created profile for user %s', user)
         except DatabaseError as e:
-            raise e from SystemError
+            logger.error('Failed to create profiles for users: %s', e)
+            
