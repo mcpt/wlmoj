@@ -23,5 +23,5 @@ class JudgeAppConfig(AppConfig):
                 # These poor profileless users
                 profile = Profile(user=user, language=lang)
                 profile.save()
-        except DatabaseError:
-            pass
+        except DatabaseError as e:
+            raise e from SystemError
