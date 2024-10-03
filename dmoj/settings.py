@@ -602,10 +602,10 @@ CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 
 WEBAUTHN_RP_ID = None
 
-if os.environ.get('DEBUG', '0') == '1':
-    LOCAL_SETTINGS_PATH = os.path.join(os.path.dirname(__file__), 'local_settings.py')
-else:
+if os.environ.get('DEBUG', '0') == '0' and os.path.exists('/local_settings.py'):
     LOCAL_SETTINGS_PATH = '/local_settings.py'
+else:
+    LOCAL_SETTINGS_PATH = os.path.join(os.path.dirname(__file__), 'local_settings.py')
 try:
     with open(LOCAL_SETTINGS_PATH) as f:
         exec(f.read(), globals())
