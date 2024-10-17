@@ -2,7 +2,7 @@ name: build
 on: [push, pull_request]
 jobs:
   lint:
-    runs-on: blacksmith-4vcpu-ubuntu-2204
+    runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.7
@@ -16,7 +16,7 @@ jobs:
         flake8 --version
         flake8
   unit:
-    runs-on: blacksmith-4vcpu-ubuntu-2204
+    runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.7
@@ -42,7 +42,7 @@ jobs:
       run: coverage xml
     - uses: codecov/codecov-action@v4
   styles:
-    runs-on: blacksmith-4vcpu-ubuntu-2204
+    runs-on: blacksmith-2vcpu-ubuntu-2204
     steps:
       - uses: actions/checkout@v4
       - name: Set up Node 20
