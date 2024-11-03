@@ -23,8 +23,7 @@ class BonusesContestFormat(DefaultContestFormat):
     name = gettext_lazy('Bonuses')
 
     def __init__(self, contest, config):
-        self.config = self.config_defaults.copy()
-        self.config.update(config or {})
+        self.config = config or {}
         self.contest = contest
 
     def update_participation(self, participation):
