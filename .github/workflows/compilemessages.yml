@@ -11,10 +11,10 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2204
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.7
+    - name: Set up Python 3.11
       uses: useblacksmith/setup-python@v6
       with:
-        python-version: '3.7'
+        python-version: '3.11'
     - name: Checkout submodules
       run: |
         git submodule init
