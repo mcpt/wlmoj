@@ -32,24 +32,24 @@
     font-weight: 400;
     line-height: 1.4;
     background: rgb(51, 122, 183) none repeat scroll 0 (0% / auto) padding-box border-box;
-    background: -webkit-linear-gradient(top, #337ab7 0, #265a88 100%) repeat-x;
-    background: linear-gradient(to bottom, #337ab7 0, #265a88 100%) repeat-x;
+    background: -webkit-linear-gradient(top, #4547c8 0, #293095 100%) repeat-x;
+    background: linear-gradient(to bottom, #4547c8 0, #293095 100%) repeat-x;
     border-radius: $widget_border_radius;
     padding: 6px 12px;
     display: block;
-    border: 1px solid #245580;
+    border: 1px solid #333ba8;
     text-align: center;
 
     // 4k hack
     font-size: $base_font_size;
 
     &:hover {
-        background: #265a88;
+        background: #3038a8;
     }
 
     &:active {
-        border-color: #245580;
-        background: #265a88;
+        border-color: #4547c8;
+        background: #3038a8;
     }
 
     &.full {
@@ -246,7 +246,7 @@ textarea:focus {
 
 // Bootstrap-y pagination
 ul.pagination a:hover {
-    background: rgba($color_primary100, 0.55);
+    background: rgba($color_primary75, 0.55);
 }
 
 ul.pagination {

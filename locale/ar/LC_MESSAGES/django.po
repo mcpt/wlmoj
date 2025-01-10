@@ -3964,7 +3964,7 @@ msgid "This site works best with JavaScript enabled."
 msgstr ""
 
 #: templates/base.html:293
-msgid "proudly powered by **DMOJ**"
+msgid "proudly powered by **wlmoj**"
 msgstr ""
 
 #: templates/blog/content.html:13 templates/comments/list.html:89

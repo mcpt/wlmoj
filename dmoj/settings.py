@@ -602,8 +602,8 @@ WEBAUTHN_RP_ID = None
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
         exec(f.read(), globals())
-except IOError:
-    pass
+except IOError as e:
+    raise ImportError('Could not import local_settings.py: %s' % e) from IOError
 
 
 # Check settings are consistent
