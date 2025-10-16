@@ -91,6 +91,8 @@ DMOJ_USER_DATA_DOWNLOAD_RATELIMIT = datetime.timedelta(days=1)
 DMOJ_COMMENT_VOTE_HIDE_THRESHOLD = -5
 DMOJ_COMMENT_REPLY_TIMEFRAME = datetime.timedelta(days=365)
 
+DMOJ_CONTEST_PERF_CEILING_INCREMENT = 400
+
 DMOJ_PDF_PDFOID_URL = None
 # Optional but recommended to save resources, path on disk to cache PDFs
 DMOJ_PDF_PROBLEM_CACHE = None
@@ -542,7 +544,6 @@ LANGUAGE_CODE = 'en'
 TIME_ZONE = 'UTC'
 DEFAULT_USER_TIME_ZONE = 'America/Toronto'
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
 # Cookies
