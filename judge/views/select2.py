@@ -80,6 +80,9 @@ class UserSearchSelect2View(BaseListView):
     def get_queryset(self):
         return _get_user_queryset(self.term).filter(is_unlisted=False)
 
+    def get_rank_class(self, display_rank, rating):
+        return Profile.get_user_css_class(display_rank, rating)
+
     def get(self, request, *args, **kwargs):
         self.request = request
         self.kwargs = kwargs
@@ -88,7 +91,7 @@ class UserSearchSelect2View(BaseListView):
         self.gravatar_default = request.GET.get('gravatar_default', None)
 
         self.object_list = self.get_queryset().values_list('pk', 'user__username', 'user__email', 'display_rank',
-                                                           'username_display_override')
+                                                           'username_display_override', 'rating')
 
         context = self.get_context_data()
 
@@ -99,7 +102,8 @@ class UserSearchSelect2View(BaseListView):
                     'id': username,
                     'gravatar_url': gravatar(email, self.gravatar_size, self.gravatar_default),
                     'display_rank': display_rank,
-                } for pk, username, email, display_rank, username_override in context['object_list']],
+                    'rank_class': self.get_rank_class(display_rank, rating),
+                } for pk, username, email, display_rank, username_override, rating in context['object_list']],
             'more': context['page_obj'].has_next(),
         })
 

@@ -14,11 +14,14 @@ tr:target {
     height: 2.3em;
 }
 
-.user-search-image, .user-search-name {
+.user-search-image {
     vertical-align: middle;
+    border-radius: 4px;
 }
 
+
 .user-search-name {
+    vertical-align: middle;
     padding-left: 0.5em;
 }
 
@@ -116,7 +119,7 @@ tr:target {
 
 img.user-gravatar {
     display: block;
-    border-radius: 6px;
+    border-radius: 4px;
     background-color: white;
 }
 

@@ -450,7 +450,8 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
         if self.profile is not None and self.hide_solved:
             queryset = queryset.exclude(id__in=Submission.objects
-                                        .filter(user=self.profile, result='AC', case_points__gte=F('case_total'))
+                                        .filter(user=self.profile, is_archived=False,
+                                                result='AC', case_points__gte=F('case_total'))
                                         .values_list('problem_id', flat=True))
         if self.show_types:
             queryset = queryset.prefetch_related('types')
@@ -695,12 +696,16 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
         return reverse('submission_status', args=(self.new_submission.id,))
 
     def form_valid(self, form):
-        if (
-            not self.request.user.has_perm('judge.spam_submission') and
-            Submission.objects.filter(user=self.request.profile, rejudged_date__isnull=True)
-                              .exclude(status__in=['D', 'IE', 'CE', 'AB']).count() >= settings.DMOJ_SUBMISSION_LIMIT
-        ):
-            return HttpResponse(format_html('<h1>{0}</h1>', _('You submitted too many submissions.')), status=429)
+        if not self.request.user.has_perm('judge.spam_submission'):
+            if (
+                Submission.objects.filter(user=self.request.profile, rejudged_date__isnull=True)
+                    .exclude(status__in=['D', 'IE', 'CE', 'AB']).count() >= settings.DMOJ_SUBMISSION_LIMIT
+            ) or (
+                Submission.objects.filter(user=self.request.profile,
+                                          date__gte=timezone.now() - settings.DMOJ_SUBMISSION_RATELIMIT_TIMEFRAME)
+                    .exclude(status__in=['IE', 'CE']).count() >= settings.DMOJ_SUBMISSION_RATELIMIT
+            ):
+                return HttpResponse(format_html('<h1>{0}</h1>', _('You submitted too many submissions.')), status=429)
         if not self.object.allowed_languages.filter(id=form.cleaned_data['language'].id).exists():
             raise PermissionDenied()
         if not self.request.user.is_superuser and self.object.banned_users.filter(id=self.request.profile.id).exists():
