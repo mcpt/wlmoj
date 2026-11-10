@@ -335,8 +335,10 @@ class ProblemPdfView(ProblemMixin, SingleObjectMixin, View):
         if settings.DMOJ_PDF_PROBLEM_CACHE:
             pdf_filename = os.path.join(settings.DMOJ_PDF_PROBLEM_CACHE, pdf_basename)
             if not os.path.exists(pdf_filename):
+                # render before opening, so a failed render doesn't leave an empty cached PDF
+                pdf = render_problem_pdf()
                 with open(pdf_filename, 'wb') as f:
-                    f.write(render_problem_pdf())
+                    f.write(pdf)
 
             if settings.DMOJ_PDF_PROBLEM_INTERNAL:
                 url_path = f'{settings.DMOJ_PDF_PROBLEM_INTERNAL}/{pdf_basename}'
