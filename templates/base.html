@@ -36,9 +36,8 @@
     {% compress css %}
         {# TODO: once dark mode support is better, enable for all users by deleting the else branch #}
         {% if perms.judge.test_site %}
-            {% if PREFERRED_STYLE_CSS is not none %}
-                <link rel="stylesheet" href="{{ static(PREFERRED_STYLE_CSS) }}">
-            {% endif %}
+            {# site_theme 'auto' has no entry in DMOJ_THEME_CSS, so fall back to light #}
+            <link rel="stylesheet" href="{{ static(PREFERRED_STYLE_CSS or LIGHT_STYLE_CSS) }}">
         {% else %}
             <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}">
         {% endif %}
