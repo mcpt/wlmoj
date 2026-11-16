@@ -35,7 +35,7 @@ lupa
 netaddr
 webauthn<1
 bleach[css]
-django-admin-sortable2
+django-admin-sortable2<2.4
 icalendar
 # This is a celery dependency whose latest major version is breaking everything.
 importlib-metadata<5
